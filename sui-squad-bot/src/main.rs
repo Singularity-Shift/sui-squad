@@ -1,12 +1,11 @@
 use teloxide::prelude::*;
-use std::sync::Arc;
 use sui_squad_core::{
     config::Config,
     db::init_db,
     sui_gateway::DummyGateway,
-    ai::OpenAIClient,
     commands::{admin, user},
 };
+use sui_squad_core::ai::openai_client::OpenAIClient;
 use tracing_subscriber;
 use anyhow::Result;
 
@@ -17,17 +16,19 @@ async fn main() -> Result<()> {
     let pool = init_db(&cfg.database_url).await?;
     let gateway = DummyGateway;
     let ai_client = OpenAIClient::new(cfg.openai_api_key.clone());
-    let bot = Bot::new(cfg.telegram_bot_token.clone()).auto_send();
+    let bot = Bot::new(cfg.teloxide_token.clone());
 
-    teloxide::repl(bot.clone(), move |cx: UpdateWithCx<AutoSend<Bot>, Message>| {
-        let gateway = gateway.clone();
-        let ai_client = ai_client.clone();
-        async move {
-            if let Some(text) = cx.update.text() {
-                // TODO: implement command parsing and dispatch to handlers
+    Dispatcher::builder(
+        bot.clone(),
+        Update::filter_message().endpoint(|cx: Message, _bot: Bot| async move {
+            if let Some(text) = cx.text() {
+                println!("Received: {}", text);
             }
-        }
-    })
+            Ok(()) as Result<(), Box<dyn std::error::Error + Send + Sync>>
+        })
+    )
+    .build()
+    .dispatch()
     .await;
 
     Ok(())
