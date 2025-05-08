@@ -8,6 +8,7 @@ pub enum Intent {
 }
 
 /// Client for OpenAI-based intent parsing.
+#[derive(Debug, Clone)]
 pub struct OpenAIClient {
     client: Client,
     api_key: Option<String>,

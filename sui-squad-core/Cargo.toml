@@ -9,7 +9,7 @@ path = "src/lib.rs"
 
 [dependencies]
 async-trait = "0.1"
-sqlx = { version = "0.7", features = ["sqlite", "macros"] }
+sqlx = { version = "0.7", features = ["sqlite", "macros", "runtime-tokio"] }
 dotenvy = "0.15"
 thiserror = "1.0"
 tracing = "0.1"
