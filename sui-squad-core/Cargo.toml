@@ -1,10 +1,10 @@
 [package]
-name = "bot-core"
+name = "sui-squad-core"
 version = "0.1.0"
 edition = "2024"
 
 [lib]
-name = "bot_core"
+name = "sui_squad_core"
 path = "src/lib.rs"
 
 [dependencies]

@@ -1,6 +1,6 @@
 use teloxide::prelude::*;
 use std::sync::Arc;
-use bot_core::{
+use sui_squad_core::{
     config::Config,
     db::init_db,
     sui_gateway::DummyGateway,

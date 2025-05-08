@@ -1,10 +1,10 @@
 [package]
-name = "bot-cli"
+name = "sui-squad-bot"
 version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-bot-core = { path = "../bot-core" }
+sui-squad-core = { path = "../bot-core" }
 teloxide = { version = "0.8", features = ["macros", "auto-send"] }
 tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
 tracing-subscriber = "0.3"
