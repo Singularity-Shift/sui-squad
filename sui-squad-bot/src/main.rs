@@ -6,8 +6,9 @@ use sui_squad_core::{
     db::init_db,
     sui_gateway::DummyGateway,
     commands::bot_commands::Command,
+    ai::LangchainClient,
+    error::CoreError,
 };
-use sui_squad_core::ai::openai_client::OpenAIClient;
 use tracing_subscriber;
 use anyhow::Result;
 
@@ -15,6 +16,7 @@ async fn answer(
     bot: Bot,
     msg: Message,
     cmd: Command,
+    ai_client: LangchainClient,
 ) -> Result<()> {
     match cmd {
         Command::Help => bot.send_message(msg.chat.id, Command::descriptions().to_string()).await?,
@@ -27,7 +29,22 @@ async fn answer(
                 bot.send_message(msg.chat.id, format!("Dummy response: Your balance for {} is 100.", token)).await?
             }
         },
-        Command::Prompt(prompt_text) => bot.send_message(msg.chat.id, format!("Dummy response: Processing prompt: {}", prompt_text)).await?,
+        Command::Prompt(prompt_text) => {
+            match ai_client.generate_response(&prompt_text).await {
+                Ok(response) => {
+                    bot.send_message(msg.chat.id, response).await?
+                }
+                Err(e) => {
+                    eprintln!("Error processing prompt: {:?}", e);
+                    let user_message = match e {
+                        CoreError::ConfigurationError(s) => format!("AI configuration error: {}", s),
+                        CoreError::LangchainError(s) => format!("AI processing error: {}", s),
+                        _ => "Sorry, I couldn't process your prompt due to an internal error.".to_string(),
+                    };
+                    bot.send_message(msg.chat.id, user_message).await?
+                }
+            }
+        },
         Command::PromptExamples => bot.send_message(msg.chat.id, "Dummy response: Examples:\n- /prompt What is the weather?\n- /prompt Summarize this article...").await?,
     };
     Ok(())
@@ -39,10 +56,9 @@ async fn main() -> Result<()> {
     let cfg = Config::from_env();
     let _pool = init_db(&cfg.database_url).await?;
     let _gateway = DummyGateway;
-    let _ai_client = OpenAIClient::new(cfg.openai_api_key.clone());
+    let ai_client = LangchainClient::new(&cfg)?;
     let bot = Bot::new(cfg.teloxide_token.clone());
 
-    // Set command menu for Telegram
     let commands = vec![
         BotCommand::new("login", "Login to the service."),
         BotCommand::new("getwallet", "Get your wallet address."),
@@ -58,6 +74,7 @@ async fn main() -> Result<()> {
         .endpoint(answer);
 
     Dispatcher::builder(bot, handler)
+        .dependencies(dptree::deps![ai_client.clone()])
         .enable_ctrlc_handler()
         .build()
         .dispatch()

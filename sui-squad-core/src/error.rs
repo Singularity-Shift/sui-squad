@@ -1,9 +1,15 @@
 use thiserror::Error;
 
 #[derive(Error, Debug)]
-pub enum BotError {
+pub enum CoreError {
     #[error("Database error: {0}")]
     DbError(#[from] sqlx::Error),
+
+    #[error("Configuration error: {0}")]
+    ConfigurationError(String),
+
+    #[error("Langchain operation failed: {0}")]
+    LangchainError(String),
 
     #[error("Unauthorized action")]
     Unauthorized,

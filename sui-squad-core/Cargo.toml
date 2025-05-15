@@ -9,11 +9,20 @@ path = "src/lib.rs"
 
 [dependencies]
 async-trait = "0.1"
-sqlx = { version = "0.7", features = ["sqlite", "macros", "runtime-tokio"] }
+sqlx = { version = "0.7", features = ["runtime-tokio", "sqlite", "macros", "migrate" ] }
 dotenvy = "0.15"
 thiserror = "1.0"
 tracing = "0.1"
 reqwest = { version = "0.11", features = ["json"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-teloxide = { version = "0.12", features = ["macros"] } 
+teloxide = { version = "0.12", features = ["macros"] }
+tokio = { version = "1", features = ["full"] }
+log = "0.4"
+pretty_env_logger = "0.5"
+# sui-sdk = "0.40.0" # We'll use a dummy for now
+config = "0.13"
+langchain-rust = { git = "https://github.com/Abraxas-365/langchain-rust" } # Using git dep for now as crates.io might be outdated
+
+[dev-dependencies]
+# ... existing code ... 
