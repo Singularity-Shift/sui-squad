@@ -20,4 +20,8 @@ impl Config {
             database_url,
         }
     }
+
+    pub fn openai_api_key(&self) -> Option<String> {
+        self.openai_api_key.clone()
+    }
 } 
