@@ -21,7 +21,10 @@ tokio = { version = "1", features = ["full"] }
 log = "0.4"
 pretty_env_logger = "0.5"
 # sui-sdk = "0.40.0" # We'll use a dummy for now
+sui_sdk = { git = "https://github.com/mystenlabs/sui", package = "sui-sdk"}
 config = "0.13"
+bcs = "0.1.6" # For serializing pure transaction arguments
+sui-types = { git = "https://github.com/mystenlabs/sui", rev = "main" } # Matching sui-sdk source
 langchain-rust = { git = "https://github.com/Abraxas-365/langchain-rust" } # Using git dep for now as crates.io might be outdated
 
 [dev-dependencies]

@@ -11,6 +11,18 @@ pub enum CoreError {
     #[error("Langchain operation failed: {0}")]
     LangchainError(String),
 
+    #[error("Sui Client Initialization Error: {0}")]
+    SuiClientInitializationError(String),
+
+    #[error("Sui RPC Error: {0}")]
+    SuiRpcError(String),
+
+    #[error("Transaction Build Error: {0}")]
+    TransactionBuildError(String),
+
+    #[error("Object not found: {0}")]
+    ObjectNotFound(String),
+
     #[error("Unauthorized action")]
     Unauthorized,
 
