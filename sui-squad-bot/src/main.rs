@@ -6,7 +6,7 @@ use sui_squad_core::{
     db::init_db,
     sui_gateway::DummyGateway,
     commands::bot_commands::Command,
-    ai::LangchainClient,
+    ai::ResponsesClient,
     error::CoreError,
 };
 use tracing_subscriber;
@@ -16,7 +16,7 @@ async fn answer(
     bot: Bot,
     msg: Message,
     cmd: Command,
-    ai_client: LangchainClient,
+    responses_client: ResponsesClient,
 ) -> Result<()> {
     match cmd {
         Command::Help => bot.send_message(msg.chat.id, Command::descriptions().to_string()).await?,
@@ -30,7 +30,7 @@ async fn answer(
             }
         },
         Command::Prompt(prompt_text) => {
-            match ai_client.generate_response(&prompt_text).await {
+            match responses_client.generate_response(&prompt_text).await {
                 Ok(response) => {
                     bot.send_message(msg.chat.id, response).await?
                 }
@@ -39,6 +39,7 @@ async fn answer(
                     let user_message = match e {
                         CoreError::ConfigurationError(s) => format!("AI configuration error: {}", s),
                         CoreError::LangchainError(s) => format!("AI processing error: {}", s),
+                        CoreError::Other(s) => format!("AI processing error: {}", s),
                         _ => "Sorry, I couldn't process your prompt due to an internal error.".to_string(),
                     };
                     bot.send_message(msg.chat.id, user_message).await?
@@ -56,7 +57,7 @@ async fn main() -> Result<()> {
     let cfg = Config::from_env();
     let _pool = init_db(&cfg.database_url).await?;
     let _gateway = DummyGateway;
-    let ai_client = LangchainClient::new(&cfg)?;
+    let responses_client = ResponsesClient::new(&cfg)?;
     let bot = Bot::new(cfg.teloxide_token.clone());
 
     let commands = vec![
@@ -74,7 +75,7 @@ async fn main() -> Result<()> {
         .endpoint(answer);
 
     Dispatcher::builder(bot, handler)
-        .dependencies(dptree::deps![ai_client.clone()])
+        .dependencies(dptree::deps![responses_client.clone()])
         .enable_ctrlc_handler()
         .build()
         .dispatch()

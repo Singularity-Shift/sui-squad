@@ -1,3 +1,3 @@
-pub mod langchain_client;
+pub mod responses_client;
 
-pub use langchain_client::{LangchainClient, Intent}; 
+pub use responses_client::ResponsesClient; 
