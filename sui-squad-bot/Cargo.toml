@@ -8,4 +8,6 @@ sui-squad-core = { path = "../sui-squad-core" }
 teloxide = { version = "0.12", features = ["macros"] }
 tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
 tracing-subscriber = "0.3"
-anyhow = "1.0" 
+anyhow = "1.0"
+serde_json = "1.0"
+openai_responses = "0.1.6" 

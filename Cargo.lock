@@ -2652,6 +2652,8 @@ name = "sui-squad-bot"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "openai_responses",
+ "serde_json",
  "sui-squad-core",
  "teloxide",
  "tokio",
