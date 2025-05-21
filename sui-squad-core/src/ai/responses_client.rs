@@ -75,7 +75,7 @@ impl ResponsesClient {
         request.tools = Some(tools);
         request.tool_choice = Some(ToolChoice::Auto);
 
-        debug!("Sending request with tools to OpenAI API");
+        debug!("Sending request with tools to OpenAI API {:?}", request);
         let result = match self.client.create(request).await {
             Ok(result) => result,
             Err(e) => {
