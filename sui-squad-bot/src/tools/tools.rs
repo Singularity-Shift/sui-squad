@@ -1,6 +1,4 @@
-/// Parses a "withdraw" command and returns a dummy response.
-/// Expected format: "withdraw <amount> <coin>"
-pub fn handle_withdraw(input: &str) -> String {
+pub fn withdraw(input: &str) -> String {
     let parts: Vec<&str> = input.trim().split_whitespace().collect();
     if parts.len() == 3 {
         let amount = parts[1];
@@ -10,13 +8,7 @@ pub fn handle_withdraw(input: &str) -> String {
         "Invalid withdraw command. Usage: withdraw <amount> <coin>".to_string()
     }
 }
-
-/// Parses a "send" command and returns a dummy response.
-/// Handles both specific user and group sends.
-/// Formats:
-/// - "send <telegram_id> <amount> <coin>"
-/// - "send everyone in the group <amount> <coin>"
-pub fn handle_send(input: &str) -> String {
+pub fn send(input: &str) -> String {
     let lower = input.trim().to_lowercase();
     let parts: Vec<&str> = input.trim().split_whitespace().collect();
     if lower.starts_with("send") {
@@ -35,4 +27,4 @@ pub fn handle_send(input: &str) -> String {
         }
     }
     "Invalid send command. Usage: send <telegram_id> <amount> <coin> or send everyone in the group <amount> <coin>".to_string()
-} 
+}
