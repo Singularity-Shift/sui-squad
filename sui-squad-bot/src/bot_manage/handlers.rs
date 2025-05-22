@@ -4,30 +4,41 @@ use crate::tools::{
 };
 use anyhow::Result;
 use openai_responses::types::OutputItem;
+use reqwest::Url;
 use squard_connect::client::squard_connect::SquardConnect;
+use std::env;
 use sui_squad_core::{ai::ResponsesClient, error::CoreError};
-use teloxide::{Bot, prelude::*, types::Message};
+use teloxide::{
+    Bot,
+    prelude::*,
+    types::{InlineKeyboardButton, InlineKeyboardMarkup, Message},
+};
 
 pub async fn handle_login(
     bot: Bot,
     msg: Message,
     squard_connect_client: SquardConnect,
 ) -> Result<()> {
-    let current_chat: teloxide::types::Chat = bot.get_chat(msg.chat.id).await?;
+    let current_chat = msg.chat;
 
     if !current_chat.is_group() {
-        let telegram_url_bot = bot.get_me().await?.tme_url().to_string();
+        let host = env::var("HOST").expect("HOST env variable is not set");
+        let redirect_url = format!("https://{host}/webhook");
 
-        let google_url = squard_connect_client
-            .clone()
-            .get_url(telegram_url_bot)
+        let url_to_build = squard_connect_client.clone().get_url(redirect_url).await?;
+
+        let url = Url::parse(&url_to_build).unwrap();
+
+        let login_button = vec![vec![InlineKeyboardButton::new(
+            "Login with google",
+            teloxide::types::InlineKeyboardButtonKind::Url(url),
+        )]];
+
+        let markdown = InlineKeyboardMarkup::new(login_button);
+
+        bot.send_message(current_chat.id, "Login on Google account")
+            .reply_markup(markdown)
             .await?;
-
-        bot.send_message(
-            msg.chat.id,
-            format!("Login on Google account {}", google_url),
-        )
-        .await?;
     }
 
     Ok(())

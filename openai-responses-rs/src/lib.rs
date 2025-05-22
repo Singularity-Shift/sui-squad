@@ -90,10 +90,7 @@ impl Client {
     /// ## Errors
     ///
     /// Errors if the request fails to send or has a non-200 status code (except for 400, which will return an OpenAI error instead).
-    pub async fn create(
-        &self,
-        mut request: Request,
-    ) -> Result<Result<Response, Error>, reqwest::Error> {
+    pub async fn create(&self, mut request: Request) -> Result<reqwest::Response, reqwest::Error> {
         // Use the `stream` function to stream the response.
         request.stream = Some(false);
 
@@ -108,7 +105,7 @@ impl Client {
             response = response.error_for_status()?;
         }
 
-        response.json::<ResponseResult>().await.map(Into::into)
+        Ok(response)
     }
 
     #[cfg(feature = "stream")]

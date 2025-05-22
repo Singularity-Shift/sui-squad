@@ -1,15 +1,16 @@
 mod bot_manage;
 mod tools;
-
-use bot_manage::handler_tree::handler_tree;
-
 use anyhow::Result;
+use bot_manage::handler_tree::handler_tree;
 use dotenvy::dotenv;
 use squard_connect::{client::squard_connect::SquardConnect, service::dtos::Network};
 use std::env;
 use sui_sdk::SuiClientBuilder;
 use sui_squad_core::{ai::ResponsesClient, commands::bot_commands::LoginState, config::Config};
-use teloxide::{dispatching::dialogue::InMemStorage, prelude::*, types::BotCommand};
+use teloxide::{
+    dispatching::dialogue::InMemStorage, prelude::*, repl_with_listener, types::BotCommand,
+    update_listeners::webhooks,
+};
 use tracing_subscriber;
 
 #[tokio::main]
@@ -21,6 +22,16 @@ async fn main() -> Result<()> {
     let client_id =
         env::var("GOOGLE_CLIENT_ID").expect("GOOGLE_CLIENT_ID environment variable not set");
     let api_key = env::var("ENOKI_API_KEY").expect("ENOKI_API_KEY environment variable not set");
+
+    let port: u16 = env::var("PORT")
+        .expect("PORT env variable is not set")
+        .parse()
+        .expect("PORT env variable value is not an integer");
+
+    let addr = ([0, 0, 0, 0], port).into();
+    let host = env::var("HOST").expect("HOST env variable is not set");
+
+    let url = format!("https://{host}/webhook").parse().unwrap();
 
     let network = match network_str.as_str() {
         "mainnet" => Network::Mainnet,
@@ -37,6 +48,7 @@ async fn main() -> Result<()> {
     let squard_connect_client = SquardConnect::new(node, client_id, network, api_key);
 
     tracing_subscriber::fmt::init();
+
     let cfg = Config::from_env();
     let responses_client = ResponsesClient::new(&cfg)?;
     let bot = Bot::new(cfg.teloxide_token.clone());
@@ -54,7 +66,11 @@ async fn main() -> Result<()> {
     ];
     bot.set_my_commands(commands).await?;
 
-    Dispatcher::builder(bot, handler_tree())
+    let listener = webhooks::axum(bot.clone(), webhooks::Options::new(addr, url))
+        .await
+        .expect("Couldn't setup webhook");
+
+    Dispatcher::builder(bot.clone(), handler_tree())
         .dependencies(dptree::deps![
             responses_client.clone(),
             InMemStorage::<LoginState>::new(),
@@ -64,6 +80,18 @@ async fn main() -> Result<()> {
         .build()
         .dispatch()
         .await;
+
+    repl_with_listener(
+        bot,
+        |bot: Bot, msg: Message| async move {
+            println!("Received message: {:?}", msg);
+            bot.send_message(msg.chat.id, "Logged successfully!")
+                .await?;
+            Ok(())
+        },
+        listener,
+    )
+    .await;
 
     Ok(())
 }
