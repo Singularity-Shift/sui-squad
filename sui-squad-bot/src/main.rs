@@ -8,8 +8,7 @@ use std::env;
 use sui_sdk::SuiClientBuilder;
 use sui_squad_core::{ai::ResponsesClient, commands::bot_commands::LoginState, config::Config};
 use teloxide::{
-    dispatching::dialogue::InMemStorage, prelude::*, repl_with_listener, types::BotCommand,
-    update_listeners::webhooks,
+    dispatching::dialogue::InMemStorage, prelude::*, types::BotCommand
 };
 use tracing_subscriber;
 
@@ -22,8 +21,6 @@ async fn main() -> Result<()> {
     let client_id =
         env::var("GOOGLE_CLIENT_ID").expect("GOOGLE_CLIENT_ID environment variable not set");
     let api_key = env::var("ENOKI_API_KEY").expect("ENOKI_API_KEY environment variable not set");
-
-    let url = format!("https://{host}/webhook").parse().unwrap();
 
     let network = match network_str.as_str() {
         "mainnet" => Network::Mainnet,
