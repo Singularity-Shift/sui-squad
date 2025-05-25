@@ -1,0 +1,19 @@
+[package]
+name = "keeper"
+edition = "2024"
+version.workspace = true
+
+[dependencies]
+axum.workspace = true
+tower.workspace = true
+tower-http.workspace = true
+serde.workspace = true 
+serde_json.workspace = true
+tracing-subscriber.workspace = true
+tokio.workspace = true
+sled = "0.34.7"
+utoipa = "5.3.1"
+utoipa-redoc = {version = "6.0.0", features = ["axum"]}
+squard_connect.workspace = true
+dotenvy.workspace = true
+sui_sdk.workspace = true

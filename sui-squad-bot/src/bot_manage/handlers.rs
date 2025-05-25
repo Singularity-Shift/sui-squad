@@ -14,6 +14,8 @@ use teloxide::{
     types::{InlineKeyboardButton, InlineKeyboardMarkup, Message},
 };
 
+use super::dto::State;
+
 pub async fn handle_login(
     bot: Bot,
     msg: Message,
@@ -22,10 +24,14 @@ pub async fn handle_login(
     let current_chat = msg.chat;
 
     if !current_chat.is_group() {
-        let host = env::var("HOST").expect("HOST env variable is not set");
-        let redirect_url = format!("https://{host}/webhook");
+        let username = current_chat.username().expect("please set username in your telegram settings");
 
-        let url_to_build = squard_connect_client.clone().get_url(redirect_url).await?;
+        let state = State::from(username.to_string());
+
+        let host = env::var("HOST").expect("HOST env variable is not set");
+        let redirect_url = format!("https://{host}/webhook/token");
+
+        let url_to_build = squard_connect_client.clone().get_url::<State>(redirect_url, Some(state)).await?;
 
         let url = Url::parse(&url_to_build).unwrap();
 

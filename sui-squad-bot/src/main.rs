@@ -23,14 +23,6 @@ async fn main() -> Result<()> {
         env::var("GOOGLE_CLIENT_ID").expect("GOOGLE_CLIENT_ID environment variable not set");
     let api_key = env::var("ENOKI_API_KEY").expect("ENOKI_API_KEY environment variable not set");
 
-    let port: u16 = env::var("PORT")
-        .expect("PORT env variable is not set")
-        .parse()
-        .expect("PORT env variable value is not an integer");
-
-    let addr = ([0, 0, 0, 0], port).into();
-    let host = env::var("HOST").expect("HOST env variable is not set");
-
     let url = format!("https://{host}/webhook").parse().unwrap();
 
     let network = match network_str.as_str() {
@@ -64,11 +56,8 @@ async fn main() -> Result<()> {
         BotCommand::new("promptexamples", "Show prompt examples."),
         BotCommand::new("help", "Display this help message."),
     ];
-    bot.set_my_commands(commands).await?;
 
-    let listener = webhooks::axum(bot.clone(), webhooks::Options::new(addr, url))
-        .await
-        .expect("Couldn't setup webhook");
+    bot.set_my_commands(commands).await?;
 
     Dispatcher::builder(bot.clone(), handler_tree())
         .dependencies(dptree::deps![
@@ -80,18 +69,6 @@ async fn main() -> Result<()> {
         .build()
         .dispatch()
         .await;
-
-    repl_with_listener(
-        bot,
-        |bot: Bot, msg: Message| async move {
-            println!("Received message: {:?}", msg);
-            bot.send_message(msg.chat.id, "Logged successfully!")
-                .await?;
-            Ok(())
-        },
-        listener,
-    )
-    .await;
 
     Ok(())
 }

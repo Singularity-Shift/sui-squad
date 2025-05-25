@@ -19,7 +19,6 @@
                     "kind": "bin"
                 }
             },
-            "envFile": "${workspaceFolder}/.env",
             "args": [],
             "cwd": "${workspaceFolder}"
         },
@@ -45,6 +44,25 @@
         {
             "type": "lldb",
             "request": "launch",
+            "name": "Debug unit tests in library 'openai_responses'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--lib",
+                    "--package=openai_responses"
+                ],
+                "filter": {
+                    "name": "openai_responses",
+                    "kind": "lib"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
             "name": "Debug unit tests in library 'sui_squad_core'",
             "cargo": {
                 "args": [
@@ -56,6 +74,43 @@
                 "filter": {
                     "name": "sui_squad_core",
                     "kind": "lib"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug executable 'keeper'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=keeper",
+                    "--package=keeper"
+                ],
+                "filter": {
+                    "name": "keeper",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in executable 'keeper'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--bin=keeper",
+                    "--package=keeper"
+                ],
+                "filter": {
+                    "name": "keeper",
+                    "kind": "bin"
                 }
             },
             "args": [],
