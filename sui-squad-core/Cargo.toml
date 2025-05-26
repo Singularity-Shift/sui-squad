@@ -22,6 +22,8 @@ pretty_env_logger.workspace = true
 config.workspace = true 
 openai_responses.workspace = true 
 reqwest = { version = "0.12.14", features = [ "http2","json","rustls-tls"], default-features = false }
+utoipa.workspace = true
+squard_connect.workspace = true
 
 [dev-dependencies]
 # ... existing code ... 

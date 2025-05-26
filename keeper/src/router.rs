@@ -11,7 +11,7 @@ use utoipa_redoc::{Redoc, Servable};
 use std::env;
 
 use crate::{
-    db, docs::{dto::ApiDoc, handler::api_docs}, info::handler::info, keep::handler::keep, state::KeeperState, webhook::handler::webhook
+    db, docs::{dto::ApiDoc, handler::api_docs}, info::handler::info, keep::handler::{auth, keep}, state::KeeperState, webhook::handler::webhook
 };
 
 pub async fn router() -> Router {
@@ -47,5 +47,6 @@ pub async fn router() -> Router {
         .route("/", get(info))
         .route("/docs", get(api_docs))
         .route("/webhook/{token}", get(webhook))
-        .route("/keep", post(keep)).with_state(state)
+        .route("/keep", post(keep))
+        .route("/auth", post(auth)).with_state(state)
 }

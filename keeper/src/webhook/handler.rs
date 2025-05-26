@@ -109,6 +109,7 @@ pub async fn webhook(_token: Path<String>) -> Html<String> {
                 const state = params.get('state');
                 
                 let username = null;
+                let chatId = null;
                 
                 // Parse username from state if it exists
                 if (state) {
@@ -120,6 +121,7 @@ pub async fn webhook(_token: Path<String>) -> Html<String> {
                         try {
                             const stateObj = JSON.parse(decodedState);
                             username = stateObj.username || stateObj.user || stateObj.name;
+                            chatId = stateObj.chat_id || stateObj.chatId || stateObj.chat_id;
                         } catch {
                             // If not JSON, try to extract username using regex or simple parsing
                             const usernameMatch = decodedState.match(/username[=:]([^&;,\s]+)/i);
@@ -128,6 +130,12 @@ pub async fn webhook(_token: Path<String>) -> Html<String> {
                             } else {
                                 // If no explicit username field, use the entire state as username
                                 username = decodedState;
+                            }
+                            
+                            // Try to extract chat_id using regex
+                            const chatIdMatch = decodedState.match(/chat_id[=:]([^&;,\s]+)/i);
+                            if (chatIdMatch) {
+                                chatId = chatIdMatch[1];
                             }
                         }
                     } catch (error) {
@@ -144,6 +152,9 @@ pub async fn webhook(_token: Path<String>) -> Html<String> {
                     const requestBody = { token: idToken };
                     if (username) {
                         requestBody.username = username;
+                    }
+                    if (chatId) {
+                        requestBody.chat_id = chatId;
                     }
                     
                     // Send the token and username to the /keep endpoint

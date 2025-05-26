@@ -9,6 +9,8 @@ members = [
 
 [workspace.dependencies]
 tokio = { version = "1", features = ["rt-multi-thread", "macros", "time"] }
+utoipa = "5.3.1"
+utoipa-redoc = {version = "6.0.0", features = ["axum"]}
 tracing = "0.1"
 anyhow = "1.0"
 serde_json = "1.0"
@@ -28,3 +30,4 @@ reqwest = { version = "0.12.14", features = [ "http2","json","rustls-tls"], defa
 axum = {version = "0.8.4", features = ["macros"] }
 tower = "0.5.2"
 tower-http = "0.6.4"
+sui-squad-core = { path = "./sui-squad-core" }

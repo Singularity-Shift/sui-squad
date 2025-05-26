@@ -1,8 +1,12 @@
 mod bot_manage;
 mod tools;
+mod services;
+mod middleware;
+
 use anyhow::Result;
 use bot_manage::handler_tree::handler_tree;
 use dotenvy::dotenv;
+use services::services::Services;
 use squard_connect::{client::squard_connect::SquardConnect, service::dtos::Network};
 use std::env;
 use sui_sdk::SuiClientBuilder;
@@ -36,6 +40,8 @@ async fn main() -> Result<()> {
 
     let squard_connect_client = SquardConnect::new(node, client_id, network, api_key);
 
+    let services = Services::new();
+
     tracing_subscriber::fmt::init();
 
     let cfg = Config::from_env();
@@ -60,7 +66,8 @@ async fn main() -> Result<()> {
         .dependencies(dptree::deps![
             responses_client.clone(),
             InMemStorage::<LoginState>::new(),
-            squard_connect_client
+            squard_connect_client, 
+            services
         ])
         .enable_ctrlc_handler()
         .build()

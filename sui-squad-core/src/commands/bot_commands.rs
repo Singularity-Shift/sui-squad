@@ -22,5 +22,5 @@ pub enum Command {
 pub enum LoginState {
     #[default]
     Login,
-    GoogleRedirect,
+    Authenticated(String),
 }

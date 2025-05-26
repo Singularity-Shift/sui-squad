@@ -3909,6 +3909,7 @@ dependencies = [
  "sled",
  "squad_connect",
  "sui-sdk",
+ "sui-squad-core",
  "tokio",
  "tower 0.5.2",
  "tower-http 0.6.4",
@@ -7211,8 +7212,8 @@ dependencies = [
 
 [[package]]
 name = "squad_connect"
-version = "0.1.0"
-source = "git+https://github.com/Singularity-Shift/squad_connect#4d682bdfbd6665753f4ef0ae1582dc09c4d133f8"
+version = "0.0.1"
+source = "git+https://github.com/Singularity-Shift/squad_connect#0ffa667fa972da1ee3a990ff1b712311d4c696c6"
 dependencies = [
  "async-trait",
  "base64 0.22.1",
@@ -7802,10 +7803,12 @@ dependencies = [
  "reqwest 0.12.15",
  "serde",
  "serde_json",
+ "squad_connect",
  "teloxide",
  "thiserror 1.0.69",
  "tokio",
  "tracing",
+ "utoipa",
 ]
 
 [[package]]

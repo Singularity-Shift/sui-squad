@@ -1,10 +1,11 @@
 use std::sync::Arc;
 
-use axum::{extract::State, response::Json};
+use axum::{extract::State, response::{Json, Result}};
 
-use crate::state::KeeperState;
+use crate::{error::ErrorKeeper, state::KeeperState};
 
-use super::dto::{AuthResponse, JwtPayload, User};
+use sui_squad_core::helpers::dtos::{AuthRequest, JwtPayload, User};
+use super::dto::AuthResponse;
 
 #[utoipa::path(
     post,
@@ -13,7 +14,7 @@ use super::dto::{AuthResponse, JwtPayload, User};
     description = "Saves jwt token for the specified ID",
     request_body = [JwtPayload],
     responses(
-        (status = 201, description = "HTML Page", body = [AuthResponse])
+        (status = 201, description = "Response if user is saved", body = [AuthResponse])
     )
 )]
 #[axum::debug_handler]
@@ -30,7 +31,7 @@ pub async fn keep(State(keeper_state): State<Arc<KeeperState>>, Json(jwt_payload
 
     println!("account: {}", account.address);
 
-    let user = User::from((jwt_payload.token, account.address));
+    let user = User::from((jwt_payload, account.address));
 
 
     let value = serde_json::to_string(&user).unwrap_or_default();
@@ -39,4 +40,34 @@ pub async fn keep(State(keeper_state): State<Arc<KeeperState>>, Json(jwt_payload
         Ok(_) => Json(AuthResponse { success: true }),
         Err(_) => Json(AuthResponse { success: false }),
     }
+}
+
+#[utoipa::path(
+    post,
+    path = "/auth",
+    summary = "Get user auth info",
+    description = "Get user auth info",
+    request_body = [AuthRequest],
+    responses(
+        (status = 201, description = "Get user auth info", body = [User])
+    )
+)]
+#[axum::debug_handler]
+pub async fn auth(State(keeper_state): State<Arc<KeeperState>>, Json(auth_request): Json<AuthRequest>) -> Result<Json<User>, ErrorKeeper> {
+    let db = keeper_state.db();
+
+    let key = format!("user:{}", auth_request.username);
+
+    let value = db.get(key)
+        .map_err(|e| ErrorKeeper { message: e.to_string(), status: 500 })?
+        .ok_or_else(|| ErrorKeeper { message: "User not found".to_string(), status: 404 })?;
+
+    let user: User = serde_json::from_slice(&value)
+        .map_err(|e| ErrorKeeper { message: e.to_string(), status: 500 })?;
+
+    if user.chat_id != auth_request.chat_id {
+        return Err(ErrorKeeper { message: "Invalid chat ID".to_string(), status: 401 });
+    }
+
+    Ok(Json(user))
 }

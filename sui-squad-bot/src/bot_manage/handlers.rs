@@ -26,7 +26,9 @@ pub async fn handle_login(
     if !current_chat.is_group() {
         let username = current_chat.username().expect("please set username in your telegram settings");
 
-        let state = State::from(username.to_string());
+        let chat_id = current_chat.id.to_string();
+
+        let state = State::from((username.to_string(), chat_id));
 
         let host = env::var("HOST").expect("HOST env variable is not set");
         let redirect_url = format!("https://{host}/webhook/token");

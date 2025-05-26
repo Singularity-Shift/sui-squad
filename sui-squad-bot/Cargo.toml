@@ -4,7 +4,7 @@ version.workspace = true
 edition = "2024"  # Changed from 2024 to 2021 for better compatibility
 
 [dependencies]
-sui-squad-core = { path = "../sui-squad-core" }
+sui-squad-core.workspace = true
 teloxide.workspace = true
 tokio.workspace = true
 tracing.workspace = true
@@ -14,9 +14,9 @@ serde.workspace = true
 dotenvy.workspace = true
 openai_responses.workspace = true
 sui_sdk.workspace = true
-squard_connect.workspace = true
 tracing-subscriber.workspace = true
 reqwest.workspace = true
 axum.workspace = true
 tower.workspace = true
 tower-http.workspace = true
+squard_connect.workspace = true
