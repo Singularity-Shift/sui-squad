@@ -2,9 +2,6 @@ use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum CoreError {
-    #[error("Database error: {0}")]
-    DbError(#[from] sqlx::Error),
-
     #[error("Configuration error: {0}")]
     ConfigurationError(String),
 
@@ -19,4 +16,4 @@ pub enum CoreError {
 
     #[error("Other error: {0}")]
     Other(String),
-} 
+}

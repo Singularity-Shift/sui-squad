@@ -167,7 +167,7 @@ pub struct InputItemList {
 #[allow(clippy::redundant_pub_crate)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
-pub(crate) enum ResponseResult {
+pub enum ResponseResult {
     Ok(Box<Response>),
     Err { error: Error },
 }

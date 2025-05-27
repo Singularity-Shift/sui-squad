@@ -11,4 +11,4 @@ macro_rules! require_admin {
             return Err(crate::error::BotError::Unauthorized);
         }
     };
-} 
+}
