@@ -1,9 +1,9 @@
 use crate::tools::{
     schema::get_schema,
-    tools::{send, withdraw},
+    tools::{send_json, withdraw_json},
 };
 use anyhow::Result as AnyhowResult;
-use openai_responses::types::OutputItem;
+use open_ai_rust_responses_by_sshift::types::ResponseItem;
 use reqwest::Url;
 use squard_connect::client::squard_connect::SquardConnect;
 use std::env;
@@ -72,32 +72,46 @@ pub async fn handle_prompt(
     {
         Ok(response) => {
             // Check if the model requested a function call
-            if let Some(call) = response.output.iter().find_map(|item| {
-                if let OutputItem::FunctionCall(call) = item {
-                    Some(call)
-                } else {
-                    None
+            // Try different possible ResponseItem variants to find tool calls
+            if let Some(function_call) = response.output.iter().find_map(|item| {
+                match item {
+                    ResponseItem::FunctionCall { name, arguments, call_id, .. } => {
+                        Some((name, arguments, call_id))
+                    },
+                    _ => {
+                        println!("Response item: {:?}", item);
+                        None
+                    },
                 }
             }) {
-                // Parse the arguments JSON
-                let args: serde_json::Value =
-                    serde_json::from_str(&call.arguments).unwrap_or_default();
+                // Extract function call information
+                let (function_name, args_str, _call_id) = function_call;
+                
+                println!("Function call detected: {} with args: {:?}", function_name, args_str);
+                
+                // Parse the JSON arguments
+                let args: serde_json::Value = serde_json::from_str(args_str)
+                    .unwrap_or_else(|_| serde_json::json!({}));
+                
                 // Dispatch to our handlers
-                let message = match call.name.as_str() {
+                let message = match function_name.as_str() {
                     "withdraw" => {
-                        let amount = args.get("amount").and_then(|v| v.as_str()).unwrap_or("");
-                        let coin = args.get("coin").and_then(|v| v.as_str()).unwrap_or("");
-                        withdraw(&format!("withdraw {} {}", amount, coin))
+                        withdraw_json(&args)
                     }
                     "send" => {
-                        let target = args.get("target").and_then(|v| v.as_str()).unwrap_or("");
-                        let amount = args.get("amount").and_then(|v| v.as_str()).unwrap_or("");
-                        let coin = args.get("coin").and_then(|v| v.as_str()).unwrap_or("");
-                        send(&format!("send {} {} {}", target, amount, coin))
+                        send_json(&args)
                     }
-                    _ => "Unknown function call".to_string(),
+                    _ => format!("Unknown function call: {}", function_name),
                 };
-                let message = bot.send_message(msg.chat.id, message).await?;
+                
+                // Ensure we always have a non-empty message
+                let final_message = if message.trim().is_empty() {
+                    format!("Executed {} function but got empty response", function_name)
+                } else {
+                    message
+                };
+                
+                let message = bot.send_message(msg.chat.id, final_message).await?;
 
                 Ok(message)
             } else {
