@@ -1,11 +1,11 @@
 use crate::config::Config;
 use crate::error::CoreError;
-use openai_responses::Client as OAIClient;
-use openai_responses::types::{
-    Error, Input, Model, Request, Response as OAIResponse, ResponseResult, Tool, ToolChoice,
+use open_ai_rust_responses_by_sshift::{Client as OAIClient, Request, Model};
+use open_ai_rust_responses_by_sshift::types::{
+    Tool, Response as OAIResponse,
 };
 
-/// Client for OpenAI-based responses using openai_responses SDK.
+/// Client for OpenAI-based responses using open_ai_rust_responses_by_sshift SDK.
 #[derive(Clone)]
 pub struct ResponsesClient {
     client: OAIClient,
@@ -28,23 +28,20 @@ impl ResponsesClient {
 
     /// Generates a text response for the given user input.
     pub async fn generate_response(&self, user_input: &str) -> Result<OAIResponse, CoreError> {
-        let mut request = Request::default();
-        request.model = Model::GPT4o;
-        request.instructions = Some("You are a helpful assistant.".to_string());
-        request.input = Input::Text(user_input.to_string());
-        let result = self
+        let request = Request::builder()
+            .model(Model::GPT4oMini)
+            .input(user_input)
+            .instructions("You are a helpful assistant.")
+            .build();
+
+        let response = self
             .client
+            .responses
             .create(request)
             .await
             .map_err(|e| CoreError::Other(e.to_string()))?;
 
-        let response: Result<Result<OAIResponse, Error>, reqwest::Error> =
-            result.json::<ResponseResult>().await.map(Into::into);
-
-        match response {
-            Ok(resp) => Ok(resp.unwrap()),
-            Err(api_err) => Err(CoreError::Other(format!("{:?}", api_err))),
-        }
+        Ok(response)
     }
 
     /// Generates a response allowing the model to call specified custom tools based on JSON schema.
@@ -53,24 +50,21 @@ impl ResponsesClient {
         user_input: &str,
         tools: Vec<Tool>,
     ) -> Result<OAIResponse, CoreError> {
-        let mut request = Request::default();
-        request.model = Model::Other(String::from("gpt-4.1-nano"));
-        request.instructions = Some("You are a helpful assistant.".to_string());
-        request.input = Input::Text(user_input.to_string());
-        request.tools = Some(tools);
-        request.tool_choice = Some(ToolChoice::Auto);
-        let result = self
+        let request = Request::builder()
+            .model(Model::GPT4oMini)  // Using GPT-4o Mini for efficient processing with tools
+            .input(user_input)
+            .instructions("You are a helpful assistant.")
+            .tools(tools)
+            .build();
+
+        let response = self
             .client
+            .responses
             .create(request)
             .await
             .map_err(|e| CoreError::Other(e.to_string()))?;
 
-        println!("result {:?}", result);
-
-        let response: OAIResponse = result
-            .json::<OAIResponse>()
-            .await
-            .map_err(|e| CoreError::Other(e.to_string()))?;
+        println!("result {:?}", response);
 
         Ok(response)
     }

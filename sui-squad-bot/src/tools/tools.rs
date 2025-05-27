@@ -1,30 +1,28 @@
-pub fn withdraw(input: &str) -> String {
-    let parts: Vec<&str> = input.trim().split_whitespace().collect();
-    if parts.len() == 3 {
-        let amount = parts[1];
-        let coin = parts[2];
+use serde_json::Value;
+
+pub fn withdraw_json(args: &Value) -> String {
+    let amount = args.get("amount").and_then(|v| v.as_str()).unwrap_or("");
+    let coin = args.get("coin").and_then(|v| v.as_str()).unwrap_or("");
+    
+    if !amount.is_empty() && !coin.is_empty() {
         format!("Withdrew {} {}", amount, coin)
     } else {
-        "Invalid withdraw command. Usage: withdraw <amount> <coin>".to_string()
+        "Invalid withdraw command. Missing amount or coin.".to_string()
     }
 }
-pub fn send(input: &str) -> String {
-    let lower = input.trim().to_lowercase();
-    let parts: Vec<&str> = input.trim().split_whitespace().collect();
-    if lower.starts_with("send") {
-        if lower.contains("everyone") {
-            if parts.len() >= 2 {
-                // amount is the second-to-last, coin is last
-                let amount = parts[parts.len() - 2];
-                let coin = parts[parts.len() - 1];
-                return format!("Sent {} {} to everyone in the group", amount, coin);
-            }
-        } else if parts.len() == 4 {
-            let target = parts[1];
-            let amount = parts[2];
-            let coin = parts[3];
-            return format!("Sent {} {} to {}", amount, coin, target);
+
+pub fn send_json(args: &Value) -> String {
+    let target = args.get("target").and_then(|v| v.as_str()).unwrap_or("");
+    let amount = args.get("amount").and_then(|v| v.as_str()).unwrap_or("");
+    let coin = args.get("coin").and_then(|v| v.as_str()).unwrap_or("");
+    
+    if !target.is_empty() && !amount.is_empty() && !coin.is_empty() {
+        if target.to_lowercase() == "everyone" {
+            format!("Sent {} {} to everyone in the group", amount, coin)
+        } else {
+            format!("Sent {} {} to {}", amount, coin, target)
         }
+    } else {
+        "Invalid send command. Missing target, amount, or coin.".to_string()
     }
-    "Invalid send command. Usage: send <telegram_id> <amount> <coin> or send everyone in the group <amount> <coin>".to_string()
 }
