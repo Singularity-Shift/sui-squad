@@ -6,6 +6,7 @@ mod webhook;
 mod state;
 mod db;
 mod error;
+mod admin;
 
 use router::router;
 use dotenvy::dotenv;

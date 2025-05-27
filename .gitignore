@@ -6,3 +6,5 @@ squard_package.txt
 contracts/payments/build
 contracts/payments/traces
 db
+sui.keystore
+sui.aliases

@@ -18,3 +18,4 @@ dotenvy.workspace = true
 sui_sdk.workspace = true
 sui-squad-core.workspace = true
 squard_connect.workspace = true
+sui_keys = {git = "https://github.com/mystenlabs/sui", package = "sui-keys" }
