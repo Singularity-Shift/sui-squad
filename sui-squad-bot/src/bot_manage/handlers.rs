@@ -2,16 +2,14 @@ use crate::tools::{
     schema::get_schema,
     tools::{send, withdraw},
 };
-use anyhow::Result;
+use anyhow::Result as AnyhowResult;
 use openai_responses::types::OutputItem;
 use reqwest::Url;
 use squard_connect::client::squard_connect::SquardConnect;
 use std::env;
-use sui_squad_core::{ai::ResponsesClient, error::CoreError};
+use sui_squad_core::{ai::ResponsesClient, commands::bot_commands::LoginState, error::CoreError};
 use teloxide::{
-    Bot,
-    prelude::*,
-    types::{InlineKeyboardButton, InlineKeyboardMarkup, Message},
+    dispatching::dialogue::InMemStorage, prelude::*, types::{InlineKeyboardButton, InlineKeyboardMarkup, Message}, Bot, RequestError
 };
 
 use super::dto::State;
@@ -19,8 +17,9 @@ use super::dto::State;
 pub async fn handle_login(
     bot: Bot,
     msg: Message,
+    dialogue: Dialogue<LoginState, InMemStorage<LoginState>>,
     squard_connect_client: SquardConnect,
-) -> Result<()> {
+) -> AnyhowResult<()> {
     let current_chat = msg.chat;
 
     if !current_chat.is_group() {
@@ -33,7 +32,13 @@ pub async fn handle_login(
         let host = env::var("HOST").expect("HOST env variable is not set");
         let redirect_url = format!("https://{host}/webhook/token");
 
-        let url_to_build = squard_connect_client.clone().get_url::<State>(redirect_url, Some(state)).await?;
+        let mut squard_connect_client = squard_connect_client.clone();
+
+        let url_to_build = squard_connect_client.get_url::<State>(redirect_url, Some(state)).await?;
+
+        let (network, public_key, max_epoch, randomness) = squard_connect_client.get_zk_proof_params();
+
+        dialogue.update(LoginState::WalletParams(network, public_key, max_epoch, randomness)).await?;
 
         let url = Url::parse(&url_to_build).unwrap();
 
@@ -57,7 +62,7 @@ pub async fn handle_prompt(
     msg: Message,
     prompt_text: String,
     responses_client: ResponsesClient,
-) -> Result<Message> {
+) -> AnyhowResult<Message> {
     // Define custom function/tool schemas for the model
     let schema = get_schema();
     // Call AI with function-calling enabled
@@ -116,5 +121,56 @@ pub async fn handle_prompt(
 
             Ok(message)
         }
+    }
+}
+
+pub async fn handle_get_balance(
+    bot: Bot,
+    msg: Message,
+    dialogue: Dialogue<LoginState, InMemStorage<LoginState>>,
+    squard_connect_client: SquardConnect,
+) -> Result<Message, RequestError> {
+    let mut balance_opt = None;
+    let state = dialogue.get().await.unwrap();
+
+    if let Some(LoginState::Authenticated(zk_login_inputs)) = state {
+        let sender = squard_connect_client.get_sender(zk_login_inputs);
+
+        let node = squard_connect_client.get_node();
+
+        let balance_result = node.coin_read_api().get_balance(sender, None).await;
+        if let Ok(balance) = balance_result {
+            balance_opt = Some(balance);
+        } else {
+            println!("Error getting balance: {:?}", balance_result.err());
+        }
+        
+
+    }
+
+    match balance_opt {
+        Some(balance) => {
+            bot.send_message(msg.chat.id, format!("Your balance is {}", balance.total_balance)).await
+        }
+        None => {
+            bot.send_message(msg.chat.id, "Error getting balance").await
+        }
+    }
+}
+
+pub async fn handle_get_wallet_address(
+    bot: Bot,
+    msg: Message,
+    dialogue: Dialogue<LoginState, InMemStorage<LoginState>>,
+    squard_connect_client: SquardConnect,
+) -> Result<Message, RequestError> {
+    let state = dialogue.get().await.unwrap();
+
+    if let Some(LoginState::Authenticated(zk_login_inputs)) = state {
+        let sender = squard_connect_client.get_sender(zk_login_inputs);
+        bot.send_message(msg.chat.id, format!("Your wallet address is {}", sender.to_string())).await
+
+    } else {
+        bot.send_message(msg.chat.id, "Error getting wallet address").await
     }
 }

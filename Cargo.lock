@@ -7212,13 +7212,14 @@ dependencies = [
 
 [[package]]
 name = "squad_connect"
-version = "0.0.1"
-source = "git+https://github.com/Singularity-Shift/squad_connect#0ffa667fa972da1ee3a990ff1b712311d4c696c6"
+version = "0.0.5"
+source = "git+https://github.com/Singularity-Shift/squad_connect?tag=0.0.5#33f900bcd330850888e69892679cc2fa758bc21f"
 dependencies = [
  "async-trait",
  "base64 0.22.1",
  "ed25519-dalek",
  "fastcrypto 0.1.9",
+ "fastcrypto-zkp",
  "hex",
  "jsonwebtoken",
  "jwt-simple",
@@ -7797,6 +7798,7 @@ dependencies = [
  "async-trait",
  "config",
  "dotenvy",
+ "fastcrypto-zkp",
  "log",
  "openai_responses",
  "pretty_env_logger",

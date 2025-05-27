@@ -18,7 +18,7 @@ serde = { version = "1.0", features = ["derive"] }
 dotenvy = "0.15.7"
 openai_responses = { path = "openai-responses-rs"}
 sui_sdk = { git = "https://github.com/mystenlabs/sui", package = "sui-sdk" }
-squard_connect = { git = "https://github.com/Singularity-Shift/squad_connect", package = "squad_connect" }
+squard_connect = { git = "https://github.com/Singularity-Shift/squad_connect", package = "squad_connect", tag="0.0.5"}
 async-trait = "0.1"
 thiserror = "1.0"
 teloxide = { version = "0.12", features = ["macros", "webhooks-axum"] }
