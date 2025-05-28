@@ -8,10 +8,6 @@ use teloxide::macros::BotCommands;
     description = "These commands are supported:"
 )]
 pub enum Command {
-    #[command(description = "Get your Squard wallet address.")]
-    GetWallet,
-    #[command(description = "Get your Squard balance.")]
-    GetBalance(String),
     #[command(description = "Send a prompt to the AI assistant.")]
     Prompt(String),
     #[command(description = "Show Squard prompt examples.")]

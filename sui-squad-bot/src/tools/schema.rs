@@ -5,6 +5,42 @@ pub fn get_schema() -> Vec<Tool> {
     vec![
         Tool {
             tool_type: "function".to_string(),
+            name: Some("get_wallet".to_string()),
+            description: Some("Get the user's wallet address formatted in a code block for easy copying".to_string()),
+            parameters: Some(json!({
+                "type": "object",
+                "properties": {},
+                "required": [],
+                "additionalProperties": false
+            })),
+            function: None,
+            vector_store_ids: Some(vec![]),
+            container: None,
+            server_label: None,
+            server_url: None,
+            headers: None,
+        },
+        Tool {
+            tool_type: "function".to_string(),
+            name: Some("get_balance".to_string()),
+            description: Some("Get the user's balance for all tokens or a specific token".to_string()),
+            parameters: Some(json!({
+                "type": "object",
+                "properties": {
+                    "token": { "type": "string", "description": "Optional token type (e.g., SUI). If not provided, returns all balances." }
+                },
+                "required": [],
+                "additionalProperties": false
+            })),
+            function: None,
+            vector_store_ids: Some(vec![]),
+            container: None,
+            server_label: None,
+            server_url: None,
+            headers: None,
+        },
+        Tool {
+            tool_type: "function".to_string(),
             name: Some("withdraw".to_string()),
             description: Some("Withdraw a specified amount of a coin from the user's account".to_string()),
             parameters: Some(json!({
