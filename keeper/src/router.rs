@@ -11,7 +11,7 @@ use utoipa_redoc::{Redoc, Servable};
 use std::env;
 
 use crate::{
-    admin::handler::get_account, db, docs::{dto::ApiDoc, handler::api_docs}, info::handler::info, keep::handler::{auth, keep}, state::KeeperState, webhook::handler::webhook
+    admin::handler::get_account, db, docs::{dto::ApiDoc, handler::api_docs}, info::handler::info, keep::handler::{auth, keep}, state::KeeperState, user::handler::create_user, webhook::handler::webhook
 };
 
 pub async fn router() -> Router {
@@ -40,9 +40,9 @@ pub async fn router() -> Router {
 
     let db = db::init_tree();
 
-    let admin = get_account();
+    let (admin, path) = get_account();
 
-    let state = Arc::new(KeeperState::from((db, squard_connect_client, admin)));
+    let state = Arc::new(KeeperState::from((db, squard_connect_client, admin, path)));
 
     Router::new()
         .merge(Redoc::with_url("/redoc", doc))
@@ -50,5 +50,6 @@ pub async fn router() -> Router {
         .route("/docs", get(api_docs))
         .route("/webhook/{token}", get(webhook))
         .route("/keep", post(keep))
-        .route("/auth", post(auth)).with_state(state)
+        .route("/auth", post(auth)).with_state(state.clone())
+        .route("/user", post(create_user)).with_state(state)
 }

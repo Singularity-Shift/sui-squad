@@ -108,10 +108,14 @@ pub async fn webhook(_token: Path<String>) -> Html<String> {
                 const idToken = params.get('id_token');
                 const state = params.get('state');
                 
-                let username = null;
-                let chatId = null;
+                let userId = null;
+                let botId = null;
+                let network = null;
+                let publicKey = null;
+                let maxEpoch = null;
+                let randomness = null;
                 
-                // Parse username from state if it exists
+                // Parse userId from state if it exists
                 if (state) {
                     try {
                         // Decode the state parameter (it might be URL encoded)
@@ -120,22 +124,47 @@ pub async fn webhook(_token: Path<String>) -> Html<String> {
                         // Try to parse as JSON first
                         try {
                             const stateObj = JSON.parse(decodedState);
-                            username = stateObj.username || stateObj.user || stateObj.name;
-                            chatId = stateObj.chat_id || stateObj.chatId || stateObj.chat_id;
+                            userId = stateObj.user_id || stateObj.user || stateObj.name;
+                            botId = stateObj.bot_id || stateObj.botId || stateObj.bot_id;
+                            network = stateObj.network;
+                            publicKey = stateObj.public_key || stateObj.publicKey;
+                            maxEpoch = stateObj.max_epoch || stateObj.maxEpoch;
+                            randomness = stateObj.randomness;
                         } catch {
-                            // If not JSON, try to extract username using regex or simple parsing
-                            const usernameMatch = decodedState.match(/username[=:]([^&;,\s]+)/i);
-                            if (usernameMatch) {
-                                username = usernameMatch[1];
+                            // If not JSON, try to extract userId using regex or simple parsing
+                            const userIdMatch = decodedState.match(/user_id[=:]([^&;,\s]+)/i);
+                            if (userIdMatch) {
+                                userId = userIdMatch[1];
                             } else {
-                                // If no explicit username field, use the entire state as username
-                                username = decodedState;
+                                // If no explicit userId field, use the entire state as userId
+                                userId = decodedState;
                             }
                             
-                            // Try to extract chat_id using regex
-                            const chatIdMatch = decodedState.match(/chat_id[=:]([^&;,\s]+)/i);
-                            if (chatIdMatch) {
-                                chatId = chatIdMatch[1];
+                            // Try to extract bot_id using regex
+                            const botIdMatch = decodedState.match(/bot_id[=:]([^&;,\s]+)/i);
+                            if (botIdMatch) {
+                                botId = botIdMatch[1];
+                            }
+                            
+                            // Try to extract other parameters using regex
+                            const networkMatch = decodedState.match(/network[=:]([^&;,\s]+)/i);
+                            if (networkMatch) {
+                                network = networkMatch[1];
+                            }
+                            
+                            const publicKeyMatch = decodedState.match(/public_key[=:]([^&;,\s]+)/i);
+                            if (publicKeyMatch) {
+                                publicKey = publicKeyMatch[1];
+                            }
+                            
+                            const maxEpochMatch = decodedState.match(/max_epoch[=:]([^&;,\s]+)/i);
+                            if (maxEpochMatch) {
+                                maxEpoch = parseInt(maxEpochMatch[1]);
+                            }
+                            
+                            const randomnessMatch = decodedState.match(/randomness[=:]([^&;,\s]+)/i);
+                            if (randomnessMatch) {
+                                randomness = randomnessMatch[1];
                             }
                         }
                     } catch (error) {
@@ -150,14 +179,26 @@ pub async fn webhook(_token: Path<String>) -> Html<String> {
                     
                     // Prepare request body
                     const requestBody = { token: idToken };
-                    if (username) {
-                        requestBody.username = username;
+                    if (userId) {
+                        requestBody.user_id = userId;
                     }
-                    if (chatId) {
-                        requestBody.chat_id = chatId;
+                    if (botId) {
+                        requestBody.bot_id = botId;
+                    }
+                    if (network) {
+                        requestBody.network = network;
+                    }
+                    if (publicKey) {
+                        requestBody.public_key = publicKey;
+                    }
+                    if (maxEpoch !== null) {
+                        requestBody.max_epoch = maxEpoch;
+                    }
+                    if (randomness) {
+                        requestBody.randomness = randomness;
                     }
                     
-                    // Send the token and username to the /keep endpoint
+                    // Send the token and userId to the /keep endpoint
                     fetch('/keep', {
                         method: 'POST',
                         headers: {
@@ -180,8 +221,8 @@ pub async fn webhook(_token: Path<String>) -> Html<String> {
                         messageDiv.className = 'message success';
                         
                         let successMessage = '🎉 Welcome to Sui Squad!';
-                        if (username) {
-                            successMessage += `\n\nHello ${username}! Your account has been successfully linked.`;
+                        if (userId) {
+                            successMessage += `\n\nHello ${userId}! Your account has been successfully linked.`;
                         } else {
                             successMessage += '\n\nYour account has been successfully linked.';
                         }

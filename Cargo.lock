@@ -3909,6 +3909,7 @@ dependencies = [
  "dotenvy",
  "serde",
  "serde_json",
+ "shared-crypto",
  "sled",
  "squad_connect",
  "sui-keys",
@@ -7211,8 +7212,8 @@ dependencies = [
 
 [[package]]
 name = "squad_connect"
-version = "0.0.5"
-source = "git+https://github.com/Singularity-Shift/squad_connect?tag=0.0.5#33f900bcd330850888e69892679cc2fa758bc21f"
+version = "0.1.3"
+source = "git+https://github.com/Singularity-Shift/squad_connect?tag=0.1.3#d1601f8566d5206b4afd934f93ea53b26fcb4946"
 dependencies = [
  "async-trait",
  "base64 0.22.1",

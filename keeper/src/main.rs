@@ -7,6 +7,7 @@ mod state;
 mod db;
 mod error;
 mod admin;
+mod user;
 
 use router::router;
 use dotenvy::dotenv;

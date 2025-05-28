@@ -29,7 +29,7 @@ impl ResponsesClient {
     /// Generates a text response for the given user input.
     pub async fn generate_response(&self, user_input: &str) -> Result<OAIResponse, CoreError> {
         let request = Request::builder()
-            .model(Model::GPT4oMini)
+            .model(Model::GPT41Mini)
             .input(user_input)
             .instructions("You are a helpful assistant.")
             .build();
@@ -51,7 +51,7 @@ impl ResponsesClient {
         tools: Vec<Tool>,
     ) -> Result<OAIResponse, CoreError> {
         let request = Request::builder()
-            .model(Model::GPT4oMini)  // Using GPT-4o Mini for efficient processing with tools
+            .model(Model::GPT41Mini)  // Using GPT-4o Mini for efficient processing with tools
             .input(user_input)
             .instructions("You are a helpful assistant.")
             .tools(tools)

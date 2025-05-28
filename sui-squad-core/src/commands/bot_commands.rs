@@ -1,5 +1,4 @@
 use fastcrypto_zkp::bn254::zk_login::ZkLoginInputs;
-use squard_connect::service::dtos::Network;
 use teloxide::macros::BotCommands;
 
 #[derive(BotCommands, Clone, Debug)]
@@ -24,6 +23,5 @@ pub enum Command {
 pub enum LoginState {
     #[default]
     Login,
-    WalletParams(Network, String, u64, String),
     Authenticated(ZkLoginInputs),
 }

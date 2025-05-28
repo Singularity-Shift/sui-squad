@@ -7,3 +7,4 @@ pub mod error;
 pub mod permissions;
 pub mod sui_gateway;
 pub mod helpers;
+pub mod package;

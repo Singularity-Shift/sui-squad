@@ -17,28 +17,29 @@ use super::dto::State;
 pub async fn handle_login(
     bot: Bot,
     msg: Message,
-    dialogue: Dialogue<LoginState, InMemStorage<LoginState>>,
     squard_connect_client: SquardConnect,
 ) -> AnyhowResult<()> {
-    let current_chat = msg.chat;
+    let current_chat = msg.chat.clone();
 
     if !current_chat.is_group() {
-        let username = current_chat.username().expect("please set username in your telegram settings");
+        let user_id = msg.from().unwrap().id.to_string();
 
-        let chat_id = current_chat.id.to_string();
-
-        let state = State::from((username.to_string(), chat_id));
-
-        let host = env::var("HOST").expect("HOST env variable is not set");
-        let redirect_url = format!("https://{host}/webhook/token");
+        let bot_id = bot.get_me().await.unwrap().id.to_string();
+        println!("bot_id: {}", bot_id);
 
         let mut squard_connect_client = squard_connect_client.clone();
 
-        let url_to_build = squard_connect_client.get_url::<State>(redirect_url, Some(state)).await?;
+        squard_connect_client.create_zkp_payload().await?;
 
         let (network, public_key, max_epoch, randomness) = squard_connect_client.get_zk_proof_params();
 
-        dialogue.update(LoginState::WalletParams(network, public_key, max_epoch, randomness)).await?;
+        let state = State::from((user_id.to_string(), bot_id, network.to_string(), public_key, max_epoch, randomness));
+
+        let host = env::var("HOST").expect("HOST env variable is not set");
+        let redirect_url = format!("https://{host}/webhook/token");
+        
+
+        let url_to_build = squard_connect_client.get_url::<State>(redirect_url, Some(state)).await?;
 
         let url = Url::parse(&url_to_build).unwrap();
 

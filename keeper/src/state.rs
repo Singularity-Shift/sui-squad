@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use sled::Db;
 use squard_connect::client::squard_connect::SquardConnect;
 use sui_sdk::types::base_types::SuiAddress;
@@ -7,13 +9,14 @@ pub struct KeeperState {
     db: Db,
     squard_connect_client: SquardConnect,
     admin: SuiAddress,
+    path: PathBuf,
 }
 
-impl From<(Db, SquardConnect, SuiAddress)> for KeeperState {
-    fn from(state: (Db, SquardConnect, SuiAddress)) -> Self {
-        let (db, squard_connect_client, admin) = state;
+impl From<(Db, SquardConnect, SuiAddress, PathBuf)> for KeeperState {
+    fn from(state: (Db, SquardConnect, SuiAddress, PathBuf)) -> Self {
+        let (db, squard_connect_client, admin, path) = state;
 
-        Self { db, squard_connect_client, admin }
+        Self { db, squard_connect_client, admin, path }
     }
 }
 
@@ -26,5 +29,15 @@ impl KeeperState {
     /// Get a reference to the squard connect client
     pub fn squard_connect_client(&self) -> &SquardConnect {
         &self.squard_connect_client
+    }
+
+    /// Get a reference to the admin
+    pub fn admin(&self) -> &SuiAddress {
+        &self.admin
+    }
+
+    /// Get a reference to the path
+    pub fn path(&self) -> &PathBuf {
+        &self.path
     }
 }
