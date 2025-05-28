@@ -1,17 +1,19 @@
 use sled::Db;
 use squard_connect::client::squard_connect::SquardConnect;
+use sui_sdk::types::base_types::SuiAddress;
 
 #[derive(Clone)]
 pub struct KeeperState {
     db: Db,
     squard_connect_client: SquardConnect,
+    admin: SuiAddress,
 }
 
-impl From<(Db, SquardConnect)> for KeeperState {
-    fn from(state: (Db, SquardConnect)) -> Self {
-        let (db, squard_connect_client) = state;
+impl From<(Db, SquardConnect, SuiAddress)> for KeeperState {
+    fn from(state: (Db, SquardConnect, SuiAddress)) -> Self {
+        let (db, squard_connect_client, admin) = state;
 
-        Self { db, squard_connect_client }
+        Self { db, squard_connect_client, admin }
     }
 }
 

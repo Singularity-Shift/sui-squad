@@ -11,7 +11,7 @@ use utoipa_redoc::{Redoc, Servable};
 use std::env;
 
 use crate::{
-    db, docs::{dto::ApiDoc, handler::api_docs}, info::handler::info, keep::handler::{auth, keep}, state::KeeperState, webhook::handler::webhook
+    admin::handler::get_account, db, docs::{dto::ApiDoc, handler::api_docs}, info::handler::info, keep::handler::{auth, keep}, state::KeeperState, webhook::handler::webhook
 };
 
 pub async fn router() -> Router {
@@ -32,15 +32,17 @@ pub async fn router() -> Router {
         Network::Mainnet => SuiClientBuilder::default().build_mainnet().await,
         Network::Testnet => SuiClientBuilder::default().build_testnet().await,
         _ => SuiClientBuilder::default().build_devnet().await,
-    };
+    }.expect("Failed to build client");
 
-    let squard_connect_client = SquardConnect::new(node.unwrap(), client_id, network, api_key);
+    let squard_connect_client = SquardConnect::new(node, client_id, network, api_key);
 
     let doc = ApiDoc::openapi();
 
     let db = db::init_tree();
 
-    let state = Arc::new(KeeperState::from((db, squard_connect_client)));
+    let admin = get_account();
+
+    let state = Arc::new(KeeperState::from((db, squard_connect_client, admin)));
 
     Router::new()
         .merge(Redoc::with_url("/redoc", doc))

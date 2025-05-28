@@ -3911,6 +3911,7 @@ dependencies = [
  "serde_json",
  "sled",
  "squad_connect",
+ "sui-keys",
  "sui-sdk",
  "sui-squad-core",
  "tokio",
