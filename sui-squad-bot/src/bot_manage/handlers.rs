@@ -121,15 +121,16 @@ pub async fn handle_prompt(
                 };
                 
                 let message = bot.send_message(msg.chat.id, final_message)
-                    .parse_mode(ParseMode::MarkdownV2)
+                    .parse_mode(ParseMode::Html)
                     .await?;
 
                 Ok(message)
             } else {
                 // No function call: send direct model output
+                let response_text = response.output_text();
                 let message = bot
-                    .send_message(msg.chat.id, response.output_text())
-                    .parse_mode(ParseMode::MarkdownV2)
+                    .send_message(msg.chat.id, response_text)
+                    .parse_mode(ParseMode::Html)
                     .await?;
 
                 Ok(message)
@@ -158,7 +159,7 @@ pub async fn handle_get_wallet_tool(
 
     if let Some(LoginState::Authenticated(zk_login_inputs)) = state {
         let sender = squard_connect_client.get_sender(zk_login_inputs);
-        format!("Your wallet address is:\n`{}`", sender.to_string())
+        format!("Your wallet address is:\n<code>{}</code>", sender.to_string())
     } else {
         "Error getting wallet address. Please login first.".to_string()
     }
