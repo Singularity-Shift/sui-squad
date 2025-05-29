@@ -37,57 +37,57 @@ pub async fn create_user(State(keeper_state): State<Arc<KeeperState>>, user: Jso
         false
     });
 
-    let admin_id = admin_event.unwrap().parsed_json.get("admin_id").unwrap().as_str().unwrap();
+    // let admin_id = admin_event.unwrap().parsed_json.get("admin_id").unwrap().as_str().unwrap();
 
-    let package_object = ObjectID::from_hex_literal(&package_id).unwrap();
+    // let package_object = ObjectID::from_hex_literal(&package_id).unwrap();
 
-    let admin_object_id = ObjectID::from_hex_literal(admin_id).unwrap();
+    // let admin_object_id = ObjectID::from_hex_literal(admin_id).unwrap();
 
-    let relations_id = ObjectID::from_bytes(&[]).unwrap();
+    // let relations_id = ObjectID::from_bytes(&[]).unwrap();
 
-    let user_address = ObjectID::from_address(user.wallet.parse().unwrap());
+    // let user_address = ObjectID::from_address(user.wallet.parse().unwrap());
 
-    println!("package_object: {:?}", package_object);
+    // println!("package_object: {:?}", package_object);
 
-    println!("admin_object_id: {:?}", admin_object_id);
+    // println!("admin_object_id: {:?}", admin_object_id);
 
-    println!("user_address: {:?}", user_address);
+    // println!("user_address: {:?}", user_address);
 
-    let tx = node.transaction_builder().move_call(
-        *admin,
-        package_object,
-        "admin",
-        "set_relations",
-        vec![],
-        vec![
-            SuiJsonValue::from_object_id(admin_object_id),       // Admin object
-            SuiJsonValue::from_object_id(relations_id),               // relations_id_opt: Option<ID> (None as empty vector)
-            SuiJsonValue::from_bcs_bytes(None, user.telegram_id.as_bytes()).unwrap(), // telegram_id: String
-            SuiJsonValue::from_object_id(user_address), // user: address
-        ],
-        None,
-        1000000,
-        None
-    ).await;
+    // let tx = node.transaction_builder().move_call(
+    //     *admin,
+    //     package_object,
+    //     "admin",
+    //     "set_relations",
+    //     vec![],
+    //     vec![
+    //         SuiJsonValue::from_object_id(admin_object_id),       // Admin object
+    //         SuiJsonValue::from_object_id(relations_id),               // relations_id_opt: Option<ID> (None as empty vector)
+    //         SuiJsonValue::from_bcs_bytes(None, user.telegram_id.as_bytes()).unwrap(), // telegram_id: String
+    //         SuiJsonValue::from_object_id(user_address), // user: address
+    //     ],
+    //     None,
+    //     1000000,
+    //     None
+    // ).await;
 
-    if let Ok(tx) = tx {
-        let keystore = FileBasedKeystore::new(keeper_state.path()).expect("Failed to create keystore");
-        let signature = keystore.sign_secure(admin, &tx, Intent::sui_transaction()).unwrap();
+    // if let Ok(tx) = tx {
+    //     let keystore = FileBasedKeystore::new(keeper_state.path()).expect("Failed to create keystore");
+    //     let signature = keystore.sign_secure(admin, &tx, Intent::sui_transaction()).unwrap();
 
-        print!("Executing the transaction...");
-        let transaction_response = node.quorum_driver_api()
-        .execute_transaction_block(
-            Transaction::from_data(tx.clone(), vec![signature]),
-            SuiTransactionBlockResponseOptions::full_content(),
-            Some(ExecuteTransactionRequestType::WaitForLocalExecution),
-        )
-        .await.unwrap();
+    //     print!("Executing the transaction...");
+    //     let transaction_response = node.quorum_driver_api()
+    //     .execute_transaction_block(
+    //         Transaction::from_data(tx.clone(), vec![signature]),
+    //         SuiTransactionBlockResponseOptions::full_content(),
+    //         Some(ExecuteTransactionRequestType::WaitForLocalExecution),
+    //     )
+    //     .await.unwrap();
 
-        println!("{}", transaction_response);
-        println!("Transaction created successfully: {:?}", tx);
-    } else {
-        println!("Error creating transaction: {:?}", tx.err());
-    }
+    //     println!("{}", transaction_response);
+    //     println!("Transaction created successfully: {:?}", tx);
+    // } else {
+    //     println!("Error creating transaction: {:?}", tx.err());
+    // }
 
     
 }
