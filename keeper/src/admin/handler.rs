@@ -4,7 +4,7 @@ use sui_keys::keystore::{AccountKeystore, FileBasedKeystore};
 use sui_sdk::types::{base_types::SuiAddress, crypto::SignatureScheme};
 
 
-pub fn get_account() -> SuiAddress {
+pub fn get_account() -> (SuiAddress, PathBuf) {
     let seed = env::var("SEED").expect("SEED must be set");
     let seed = seed.trim_matches('"');
     
@@ -19,5 +19,5 @@ pub fn get_account() -> SuiAddress {
 
     println!("Sender: {}", sender);
 
-    sender
+    (sender, path)
 }

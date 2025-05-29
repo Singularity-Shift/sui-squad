@@ -1,5 +1,5 @@
 use reqwest::Client;
-use sui_squad_core::helpers::dtos::{AuthRequest, User};
+use sui_squad_core::helpers::dtos::{AuthRequest, User, UserPayload};
 use anyhow::Result;
 
 use super::dto::Endpoints;
@@ -26,6 +26,15 @@ impl Services {
         let user: User = response.json().await?;
 
         Ok(user)
+    }
+
+    pub async fn user(&self, user: UserPayload) -> Result<()> {
+        self.client.post(Endpoints::User.to_string())
+            .json(&user)
+            .send()
+            .await?;       
+
+        Ok(())
     }
 
 }

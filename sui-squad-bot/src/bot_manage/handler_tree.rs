@@ -7,13 +7,13 @@ use teloxide::{
     types::{Message, Update},
 };
 
-use crate::middleware::auth::auth;
+use crate::middleware::{auth::auth, user::check_user};
 
 use super::{answer::answer, handlers::handle_login};
 
 pub fn handler_tree() -> Handler<'static, DependencyMap, Result<()>, DpHandlerDescription> {
     Update::filter_message().enter_dialogue::<Message, InMemStorage<LoginState>, LoginState>()
-        .branch(dptree::entry().filter_async(auth).filter_command::<Command>().endpoint(answer))
+        .branch(dptree::entry().filter_async(auth).inspect_async(check_user).filter_command::<Command>().endpoint(answer))
         .branch(
             dptree::entry()
                 .branch(dptree::case![LoginState::Login].endpoint(handle_login)),

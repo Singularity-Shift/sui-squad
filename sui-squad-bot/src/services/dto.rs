@@ -2,6 +2,7 @@ use std::{fmt, env};
 
 pub enum Endpoints {
     Auth,
+    User,
 }
 
 impl fmt::Display for Endpoints {
@@ -11,6 +12,7 @@ impl fmt::Display for Endpoints {
 
         match self {
             &Endpoints::Auth => write!(f, "{}/auth", backend_url),
+            &Endpoints::User => write!(f, "{}/user", backend_url),
         }
     }
 }

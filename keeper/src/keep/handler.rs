@@ -25,7 +25,7 @@ pub async fn keep(State(keeper_state): State<Arc<KeeperState>>, Json(jwt_payload
     squard_connect_client.set_jwt(jwt_payload.token.clone());
 
     // Save user data to database
-    let key = format!("user:{}", jwt_payload.username);
+    let key = format!("user:{}", jwt_payload.user_id);
 
     let user = User::from(jwt_payload);
 
@@ -52,7 +52,7 @@ pub async fn keep(State(keeper_state): State<Arc<KeeperState>>, Json(jwt_payload
 pub async fn auth(State(keeper_state): State<Arc<KeeperState>>, Json(auth_request): Json<AuthRequest>) -> Result<Json<User>, ErrorKeeper> {
     let db = keeper_state.db();
 
-    let key = format!("user:{}", auth_request.username);
+    let key = format!("user:{}", auth_request.user_id);
 
     let value = db.get(key)
         .map_err(|e| ErrorKeeper { message: e.to_string(), status: 500 })?
@@ -61,8 +61,8 @@ pub async fn auth(State(keeper_state): State<Arc<KeeperState>>, Json(auth_reques
     let user: User = serde_json::from_slice(&value)
         .map_err(|e| ErrorKeeper { message: e.to_string(), status: 500 })?;
 
-    if user.chat_id != auth_request.chat_id {
-        return Err(ErrorKeeper { message: "Invalid chat ID".to_string(), status: 401 });
+    if user.bot_id != auth_request.bot_id {
+        return Err(ErrorKeeper { message: "Invalid bot ID".to_string(), status: 401 });
     }
 
     Ok(Json(user))
