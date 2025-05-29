@@ -31,7 +31,7 @@ impl ResponsesClient {
         let request = Request::builder()
             .model(Model::GPT41Mini)
             .input(user_input)
-            .instructions("You are a helpful assistant.")
+            .instructions("You are SUI Squad Bot, a helpful Sui blockchain wallet assistant for Telegram groups. Respond conversationally and provide helpful information about wallet functionality.")
             .build();
 
         let response = self
@@ -50,10 +50,12 @@ impl ResponsesClient {
         user_input: &str,
         tools: Vec<Tool>,
     ) -> Result<OAIResponse, CoreError> {
+        let instructions = "You are SUI Squad Bot, a Sui blockchain wallet assistant. ONLY use the available tools when the user specifically and explicitly asks for wallet actions (balance, address, send, withdraw). DO NOT call any tools for greetings, casual conversation, or general questions. When you do use a tool, select the EXACT tool that matches the user's request - use get_wallet for address requests, get_balance for balance requests, send for transfer requests, and withdraw for withdrawal requests. Respond conversationally by default.";
+
         let request = Request::builder()
             .model(Model::GPT41Mini)  // Using GPT-4o Mini for efficient processing with tools
             .input(user_input)
-            .instructions("You are a helpful assistant.")
+            .instructions(instructions)
             .tools(tools)
             .build();
 
