@@ -5012,9 +5012,9 @@ checksum = "c08d65885ee38876c4f86fa503fb49d7b507c2b62552df7c70b2fce627e06381"
 
 [[package]]
 name = "open-ai-rust-responses-by-sshift"
-version = "0.1.1"
+version = "0.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "42ef728dfdd1ce5db370a97e13ff4e9cf520004c129a93d84f8205cfa00bb2d5"
+checksum = "e7d209d2d20459d6339a9020ed5e6e24a45252d8546a726f2e37e8d16a63af37"
 dependencies = [
  "async-fn-stream",
  "chrono",
