@@ -3,7 +3,7 @@ use squard_connect::client::squard_connect::SquardConnect;
 use sui_squad_core::{ai::ResponsesClient, commands::bot_commands::{Command, LoginState}};
 use teloxide::{dispatching::dialogue::InMemStorage, prelude::*, types::Message, utils::command::BotCommands, Bot};
 
-use super::handlers::{handle_get_balance, handle_get_wallet_address, handle_prompt};
+use super::handlers::{handle_prompt};
 
 pub async fn answer(
     bot: Bot,
@@ -15,10 +15,8 @@ pub async fn answer(
 ) -> Result<()> {
     match cmd {
         Command::Help => bot.send_message(msg.chat.id, Command::descriptions().to_string()).await?,
-        Command::GetWallet => handle_get_wallet_address(bot, msg, dialogue, squard_connect_client).await?,
-        Command::GetBalance(_token) => handle_get_balance(bot, msg, dialogue, squard_connect_client).await?,
-        Command::Prompt(prompt_text) => handle_prompt(bot, msg, prompt_text, responses_client).await?,
-        Command::PromptExamples => bot.send_message(msg.chat.id, "Dummy response: Examples:\n- /prompt What is the weather?\n- /prompt Summarize this article...").await?,
+        Command::Prompt(prompt_text) => handle_prompt(bot, msg, prompt_text, responses_client, dialogue, squard_connect_client).await?,
+        Command::PromptExamples => bot.send_message(msg.chat.id, "Here are some example prompts you can use:\n\n💰 Wallet & Balance:\n- /prompt \"What's my wallet address?\"\n- /prompt \"Show my balance\"\n- /prompt \"Check my SUI balance\"\n- /prompt \"How much do I have?\"\n\n💸 Transactions:\n- /prompt \"Send 10 SUI to @username\"\n- /prompt \"Withdraw 5 SUI\"\n- /prompt \"Send 100 SUI to everyone\"\n\n❓ General:\n- /prompt \"What can you help me with?\"\n- /prompt \"Explain how this bot works\"").await?,
     };
     Ok(())
 }
