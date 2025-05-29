@@ -106,17 +106,22 @@ impl ResponsesClient {
     }
 
     /// Submit function outputs and continue the conversation
+    /// This follows the Responses API pattern where both the original function calls
+    /// and the outputs must be included in the input array of a new request
     pub async fn submit_tool_outputs(
         &self,
-        response_id: String,
-        function_outputs: Vec<(String, String)>,
+        previous_response_id: String,
+        function_outputs: Vec<(String, String)>, // (call_id, output)
         tools: Vec<Tool>,
     ) -> Result<OAIResponse, CoreError> {
         let instructions = "You are SUI Squad Bot, a Sui blockchain wallet assistant. Continue helping the user based on the function results.";
 
+        // The Responses API requires creating a NEW request with function_call_output items
+        // The wrapper should handle this automatically when we provide previous_response_id
+        // and function outputs - it will include both function_call and function_call_output items
         let request = Request::builder()
             .model(Model::GPT41Mini)
-            .with_function_outputs(response_id, function_outputs)
+            .with_function_outputs(previous_response_id, function_outputs)
             .tools(tools)
             .instructions(instructions)
             .build();
@@ -127,6 +132,8 @@ impl ResponsesClient {
             .create(request)
             .await
             .map_err(|e| CoreError::Other(e.to_string()))?;
+
+        println!("submit_tool_outputs response: {:?}", response);
 
         Ok(response)
     }
