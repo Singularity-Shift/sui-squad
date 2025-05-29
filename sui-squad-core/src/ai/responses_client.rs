@@ -2,7 +2,7 @@ use crate::config::Config;
 use crate::error::CoreError;
 use open_ai_rust_responses_by_sshift::{Client as OAIClient, Request, Model};
 use open_ai_rust_responses_by_sshift::types::{
-    Tool, Response as OAIResponse,
+    Tool, Response as OAIResponse, ToolChoice,
 };
 
 /// Client for OpenAI-based responses using open_ai_rust_responses_by_sshift SDK.
@@ -31,7 +31,7 @@ impl ResponsesClient {
         let request = Request::builder()
             .model(Model::GPT41Mini)
             .input(user_input)
-            .instructions("You are SUI Squad Bot, a helpful Sui blockchain wallet assistant for Telegram groups. Respond conversationally and provide helpful information about wallet functionality.")
+            .instructions("You are SUI Squad Bot, a Sui blockchain wallet assistant for Telegram groups. Respond conversationally and provide helpful information about wallet functionality. For specific wallet actions like checking balance, getting address, sending, or withdrawing, let users know they can use the specific wallet commands.")
             .build();
 
         let response = self
@@ -72,6 +72,7 @@ impl ResponsesClient {
     }
 
     /// Generates a response with conversation continuity and tools support
+    /// This matches the exact pattern from the comprehensive demo
     pub async fn generate_with_tools_continuous(
         &self,
         user_input: &str,
@@ -84,7 +85,8 @@ impl ResponsesClient {
             .model(Model::GPT41Mini)
             .input(user_input)
             .instructions(instructions)
-            .tools(tools);
+            .tools(tools)
+            .tool_choice(ToolChoice::auto());
 
         // Add conversation continuity if we have a previous conversation
         if let Some(prev_id) = previous_response_id {
@@ -98,40 +100,34 @@ impl ResponsesClient {
             .responses
             .create(request)
             .await
-            .map_err(|e| CoreError::Other(e.to_string()))?;
+            .map_err(|e| CoreError::Other(format!("Failed to create response: {}", e)))?;
 
-        println!("result {:?}", response);
+        println!("generate_with_tools_continuous result: {:?}", response);
 
         Ok(response)
     }
 
     /// Submit function outputs and continue the conversation
-    /// This follows the Responses API pattern where both the original function calls
-    /// and the outputs must be included in the input array of a new request
+    /// Uses the exact pattern from the comprehensive demo
     pub async fn submit_tool_outputs(
         &self,
-        previous_response_id: String,
+        response_id: String,
         function_outputs: Vec<(String, String)>, // (call_id, output)
         tools: Vec<Tool>,
     ) -> Result<OAIResponse, CoreError> {
-        let instructions = "You are SUI Squad Bot, a Sui blockchain wallet assistant. Continue helping the user based on the function results.";
-
-        // The Responses API requires creating a NEW request with function_call_output items
-        // The wrapper should handle this automatically when we provide previous_response_id
-        // and function outputs - it will include both function_call and function_call_output items
-        let request = Request::builder()
+        // Submit tool outputs and continue conversation using the exact pattern from demo
+        let continuation_request = Request::builder()
             .model(Model::GPT41Mini)
-            .with_function_outputs(previous_response_id, function_outputs)
-            .tools(tools)
-            .instructions(instructions)
+            .with_function_outputs(response_id, function_outputs)
+            .tools(tools) // Keep tools available for potential follow-ups
             .build();
 
         let response = self
             .client
             .responses
-            .create(request)
+            .create(continuation_request)
             .await
-            .map_err(|e| CoreError::Other(e.to_string()))?;
+            .map_err(|e| CoreError::Other(format!("Failed to create response: {}", e)))?;
 
         println!("submit_tool_outputs response: {:?}", response);
 

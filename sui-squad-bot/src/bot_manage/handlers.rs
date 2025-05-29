@@ -7,7 +7,7 @@ use reqwest::Url;
 use squard_connect::client::squard_connect::SquardConnect;
 use std::env;
 use sui_squad_core::{
-    ai::{ResponsesClient, ResponseExt}, 
+    ai::ResponsesClient, 
     commands::bot_commands::LoginState, 
     conversation::ConversationCache,
 };
