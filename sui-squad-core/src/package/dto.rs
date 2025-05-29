@@ -18,6 +18,7 @@ pub enum AccountFunction {
 pub enum Event {
     AdminEvent,
     AccountEvent,
+    RelationEvent,
 }
 
 
@@ -32,6 +33,7 @@ impl fmt::Display for Event {
         match self {
             Event::AdminEvent => write!(f, "{}::admin::AdminEvent", package),
             Event::AccountEvent => write!(f, "{}::account::AccountEvent", package),
+            Event::RelationEvent => write!(f, "{}::admin::RelationEvent", package),
         }
     }
 }

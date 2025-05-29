@@ -31,6 +31,11 @@ module sui_squard::admin {
     wallet: address,
   }
 
+  public struct RelationEvent has copy, drop {
+    relation_id: ID,
+    relations: vector<String>,
+  }
+
   public struct ADMIN has drop {}
 
   fun init(otw: ADMIN, ctx: &mut TxContext) {
@@ -62,10 +67,16 @@ module sui_squard::admin {
       relations_id = option::extract(relations_id_opt);
       let relations = dof::borrow_mut<ID, Relations>(self.borrow_mut(), relations_id);
 
-      let relation = AccountRelation { account: user, telegram_id };
+      let some_relation = relations.relations.find_index!(|r| r.account == user);
 
-      relations.relations.push_back(relation);
+      if(option::is_none(&some_relation)) {
+        let relation = AccountRelation { account: user, telegram_id };
 
+        relations.relations.push_back(relation);
+
+        let relations_vector = relations.relations.map_ref!(|r| r.telegram_id);
+        event::emit(RelationEvent { relation_id: relations_id, relations: relations_vector });
+      }
     } else {
       let id = object::new(ctx);
       relations_id = object::uid_to_inner(&id);
@@ -75,7 +86,11 @@ module sui_squard::admin {
 
       relations.relations.push_back(relation);
 
+      let relations_vector = relations.relations.map_ref!(|r| r.telegram_id);
+
       dof::add(&mut self.id, relations_id, relations);
+
+      event::emit(RelationEvent { relation_id: relations_id, relations: relations_vector });
     };
 
     relations_id
