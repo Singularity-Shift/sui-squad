@@ -91,8 +91,15 @@ pub async fn handle_prompt(
     
     // Call AI with function-calling enabled AND conversation continuity
     let mut current_response = responses_client
-        .generate_with_tools_continuous(&prompt_text, schema.clone(), previous_response_id)
+        .generate_response(Some(&prompt_text), Some(schema.clone()), previous_response_id, None)
         .await?;
+    
+    // Alternative using convenience method:
+    // let mut current_response = if let Some(prev_id) = previous_response_id {
+    //     responses_client.continue_conversation(&prompt_text, schema.clone(), prev_id).await?
+    // } else {
+    //     responses_client.with_tools(&prompt_text, schema.clone()).await?
+    // };
     
     let mut iteration = 1;
     const MAX_ITERATIONS: usize = 5; // Prevent infinite loops
@@ -137,14 +144,20 @@ pub async fn handle_prompt(
             function_outputs.push((tool_call.call_id.clone(), result));
         }
         
-        // Submit tool outputs and get next response
+        // Submit tool outputs and get next response using unified method
         current_response = responses_client
-            .submit_tool_outputs(
-                current_response.id().to_string(), 
-                function_outputs, 
-                schema.clone()
+            .generate_response(
+                None, 
+                Some(schema.clone()), 
+                None, 
+                Some((current_response.id().to_string(), function_outputs))
             )
             .await?;
+        
+        // Alternative using convenience method:
+        // current_response = responses_client
+        //     .submit_outputs(current_response.id().to_string(), function_outputs, schema.clone())
+        //     .await?;
         
         iteration += 1;
     }
