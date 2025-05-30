@@ -9,8 +9,14 @@ use dotenvy::dotenv;
 use services::services::Services;
 use squard_connect::{client::squard_connect::SquardConnect, service::dtos::Network};
 use std::env;
+use std::time::Duration;
 use sui_sdk::SuiClientBuilder;
-use sui_squad_core::{ai::ResponsesClient, commands::bot_commands::LoginState, config::Config};
+use sui_squad_core::{
+    ai::ResponsesClient, 
+    commands::bot_commands::LoginState, 
+    config::Config,
+    conversation::ConversationCache
+};
 use teloxide::{
     dispatching::dialogue::InMemStorage, prelude::*, types::BotCommand
 };
@@ -42,6 +48,22 @@ async fn main() -> Result<()> {
 
     let services = Services::new();
 
+    // Create conversation cache with 10-minute TTL
+    let conversation_cache = ConversationCache::new(Duration::from_secs(600));
+    let cache_for_cleanup = conversation_cache.clone();
+    
+    // Spawn cleanup task that runs every minute
+    tokio::spawn(async move {
+        let mut interval = tokio::time::interval(Duration::from_secs(60));
+        loop {
+            interval.tick().await;
+            cache_for_cleanup.cleanup_expired().await;
+            println!("🧹 Cleaned up expired conversations");
+        }
+    });
+
+    println!("✅ Conversation cache initialized with 10-minute TTL");
+
     tracing_subscriber::fmt::init();
 
     let cfg = Config::from_env();
@@ -62,7 +84,8 @@ async fn main() -> Result<()> {
             responses_client.clone(),
             InMemStorage::<LoginState>::new(),
             squard_connect_client, 
-            services
+            services,
+            conversation_cache
         ])
         .enable_ctrlc_handler()
         .build()
