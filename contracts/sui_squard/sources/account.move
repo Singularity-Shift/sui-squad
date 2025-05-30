@@ -1,7 +1,7 @@
 module sui_squard::account {
   use std::string::String;
   use sui::{dynamic_field as df, event, coin::{Coin}};
-  use sui_squard::admin::{Admin};
+  use sui_squard::admin::Relation;
 
   const EMismatchedSenderAccount: u64 = 1;
   const ENotFoundBalance: u64 = 3;
@@ -21,11 +21,11 @@ module sui_squard::account {
 
   public struct AccountBalance<phantom T> has copy, drop, store { }
 
-  public entry fun create_new_account(admin: &mut Admin, relations_id: ID, ctx: &mut TxContext): ID {
+  public entry fun create_new_account(relation: &Relation, ctx: &mut TxContext): ID {
     let id = object::new(ctx);
     let account_id = object::uid_to_inner(&id);
 
-    let telegram_id = admin.borrow_telegram_id(relations_id, ctx.sender());
+    let telegram_id = relation.borrow_telegram_id(ctx.sender());
 
     let account = Account {
       id,
@@ -84,10 +84,6 @@ module sui_squard::account {
     } else {
       df::add(&mut recipient.id, account_balance_type, coin);
     };
-  }
-
-  public fun borrow_account_id(self: &Account): &ID {
-    &self.account_id
   }
 
   public fun get_address(self: &Account): address {

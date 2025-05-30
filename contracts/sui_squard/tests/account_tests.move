@@ -7,7 +7,8 @@ module sui_squard::account_tests {
     use sui::coin::{Self, Coin};
     use sui::sui::SUI;
     use std::string;
-
+    use sui_squard::admin::Relation;
+    
     const EVALUES_DOES_NOT_MATCH: u64 = 1;
 
     const ADMIN: address = @0x100;
@@ -27,18 +28,17 @@ module sui_squard::account_tests {
 
         ts.next_tx(ADMIN);
 
-        let mut admin_obj = ts.take_shared<Admin>();
+        let admin_obj = ts.take_from_sender<Admin>();
 
         ts.next_tx(ADMIN);
 
-        ts.next_tx(ADMIN);
+        let mut relation_obj = ts.take_shared<Relation>();
 
-
-        let relations_id = admin_obj.set_relations(&mut option::none(), string::utf8(b"tg_test"), USER, ts.ctx());
+        admin_obj.set_relations(&mut relation_obj, string::utf8(b"tg_test"), USER, ts.ctx());
 
         ts.next_tx(USER);
 
-        let account_id = account::create_new_account(&mut admin_obj, relations_id, ts.ctx());
+        let account_id = account::create_new_account(&relation_obj, ts.ctx());
 
         ts.next_tx(USER);
         
@@ -50,7 +50,9 @@ module sui_squard::account_tests {
 
         ts::return_shared(account_obj);
 
-        ts::return_shared(admin_obj);
+        ts::return_to_address(ADMIN,admin_obj);
+
+        ts::return_shared(relation_obj);
 
         ts::end(ts);
     } 
@@ -63,19 +65,19 @@ module sui_squard::account_tests {
 
         ts.next_tx(ADMIN);
 
-        let mut admin_obj = ts.take_shared<Admin>();
+        let admin_obj = ts.take_from_sender<Admin>();
 
         ts.next_tx(ADMIN);
 
-        ts.next_tx(ADMIN);
+        let mut relation_obj = ts.take_shared<Relation>();
 
-        let relations_id = admin_obj.set_relations(&mut option::none(), string::utf8(b"tg_test"), USER, ts.ctx());
+        admin_obj.set_relations(&mut relation_obj, string::utf8(b"tg_test"), USER, ts.ctx());
 
         ts.next_tx(USER);
 
         let coin = test_coin(&mut ts, 1000);
 
-        let account_id = account::create_new_account(&mut admin_obj, relations_id, ts.ctx());
+        let account_id = account::create_new_account(&relation_obj, ts.ctx());
 
         ts.next_tx(USER);
         
@@ -91,7 +93,9 @@ module sui_squard::account_tests {
 
         ts::return_shared(account_obj);
 
-        ts::return_shared(admin_obj);
+        ts::return_to_address(ADMIN,admin_obj);
+
+        ts::return_shared(relation_obj);
 
         ts::end(ts);
     }
@@ -104,17 +108,19 @@ module sui_squard::account_tests {
 
         ts.next_tx(ADMIN);
 
-        let mut admin_obj = ts.take_shared<Admin>();
+        let admin_obj = ts.take_from_sender<Admin>();
 
         ts.next_tx(ADMIN);
 
-        let relations_id = admin_obj.set_relations(&mut option::none(), string::utf8(b"tg_test"), USER, ts.ctx());
+        let mut relation_obj = ts.take_shared<Relation>();
+
+        admin_obj.set_relations(&mut relation_obj, string::utf8(b"tg_test"), USER, ts.ctx());
 
         ts.next_tx(USER);
 
         let coin = test_coin(&mut ts, 1000);
 
-        let account_id = account::create_new_account(&mut admin_obj, relations_id, ts.ctx());
+        let account_id = account::create_new_account(&relation_obj, ts.ctx());
 
         ts.next_tx(USER);
         
@@ -130,7 +136,9 @@ module sui_squard::account_tests {
 
         ts::return_shared(account_obj);
 
-        ts::return_shared(admin_obj);
+        ts::return_to_address(ADMIN,admin_obj);
+
+        ts::return_shared(relation_obj);
 
         ts::end(ts);
     }
@@ -143,19 +151,20 @@ module sui_squard::account_tests {
 
         ts.next_tx(ADMIN);
 
-        let mut admin_obj = ts.take_shared<Admin>();
+        let admin_obj = ts.take_from_sender<Admin>();
 
 
         ts.next_tx(ADMIN);
 
+        let mut relation_obj = ts.take_shared<Relation>();
 
-        let relations_id = admin_obj.set_relations(&mut option::none(), string::utf8(b"tg_test"), USER, ts.ctx());
+        admin_obj.set_relations(&mut relation_obj, string::utf8(b"tg_test"), USER, ts.ctx());
 
         ts.next_tx(USER);
 
         let coin = test_coin(&mut ts, 1000);
 
-        let account_id = account::create_new_account(&mut admin_obj, relations_id, ts.ctx());
+        let account_id = account::create_new_account(&relation_obj, ts.ctx());
 
         ts.next_tx(USER);
         
@@ -165,11 +174,11 @@ module sui_squard::account_tests {
 
         ts.next_tx(ADMIN);
 
-        let relations_recipient_id = admin_obj.set_relations(&mut option::none(), string::utf8(b"tg_test_recipient"), RECIPIENT, ts.ctx());
+        admin_obj.set_relations(&mut relation_obj, string::utf8(b"tg_test_recipient"), RECIPIENT, ts.ctx());
 
         ts.next_tx(RECIPIENT);
 
-        let recipient_account_id = account::create_new_account(&mut admin_obj, relations_recipient_id, ts.ctx());
+        let recipient_account_id = account::create_new_account(&relation_obj, ts.ctx());
 
         ts.next_tx(RECIPIENT);
         
@@ -189,7 +198,9 @@ module sui_squard::account_tests {
 
         ts::return_shared(account_obj);
 
-        ts::return_shared(admin_obj);
+        ts::return_to_address(ADMIN,admin_obj);
+
+        ts::return_shared(relation_obj);
 
         ts::end(ts);
     }
@@ -202,19 +213,20 @@ module sui_squard::account_tests {
 
         ts.next_tx(ADMIN);
 
-        let mut admin_obj = ts.take_shared<Admin>();
+        let admin_obj = ts.take_from_sender<Admin>();
 
 
         ts.next_tx(ADMIN);
 
+        let mut relation_obj = ts.take_shared<Relation>();
 
-        let relations_id = admin_obj.set_relations(&mut option::none(), string::utf8(b"tg_test"), USER, ts.ctx());
+        admin_obj.set_relations(&mut relation_obj, string::utf8(b"tg_test"), USER, ts.ctx());
 
         ts.next_tx(USER);
 
         let coin = test_coin(&mut ts, 1000);
 
-        let account_id = account::create_new_account(&mut admin_obj, relations_id, ts.ctx());
+        let account_id = account::create_new_account(&relation_obj, ts.ctx());
 
         ts.next_tx(USER);
         
@@ -224,11 +236,11 @@ module sui_squard::account_tests {
 
         ts.next_tx(ADMIN);
 
-        let relations_recipient_id = admin_obj.set_relations(&mut option::none(), string::utf8(b"tg_test_recipient"), RECIPIENT, ts.ctx());
+        admin_obj.set_relations(&mut relation_obj, string::utf8(b"tg_test_recipient"), RECIPIENT, ts.ctx());
 
         ts.next_tx(RECIPIENT);
 
-        let recipient_account_id = account::create_new_account(&mut admin_obj, relations_recipient_id, ts.ctx());
+        let recipient_account_id = account::create_new_account(&relation_obj, ts.ctx());
 
         ts.next_tx(RECIPIENT);
         
@@ -252,7 +264,9 @@ module sui_squard::account_tests {
 
         ts::return_shared(account_obj);
 
-        ts::return_shared(admin_obj);
+        ts::return_to_address(ADMIN,admin_obj);
+
+        ts::return_shared(relation_obj);
 
         ts::end(ts);
     }
@@ -265,15 +279,17 @@ module sui_squard::account_tests {
 
         ts.next_tx(ADMIN);
 
-        let mut admin_obj = ts.take_shared<Admin>();
+        let admin_obj = ts.take_from_sender<Admin>();
 
         ts.next_tx(ADMIN);
 
-        let relations_id = admin_obj.set_relations(&mut option::none(), string::utf8(b"tg_test"), USER, ts.ctx());
+        let mut relation_obj = ts.take_shared<Relation>();
+
+        admin_obj.set_relations(&mut relation_obj, string::utf8(b"tg_test"), USER, ts.ctx());
 
         ts.next_tx(FAKE_USER);  
 
-        account::create_new_account(&mut admin_obj, relations_id, ts.ctx());
+        account::create_new_account(&relation_obj, ts.ctx());
 
         abort 2
     }
@@ -286,19 +302,20 @@ module sui_squard::account_tests {
 
         ts.next_tx(ADMIN);
 
-        let mut admin_obj = ts.take_shared<Admin>();
+        let admin_obj = ts.take_from_sender<Admin>();
 
 
         ts.next_tx(ADMIN);
 
+        let mut relation_obj = ts.take_shared<Relation>();
 
-        let relations_id = admin_obj.set_relations(&mut option::none(), string::utf8(b"tg_test"), USER, ts.ctx());
+        admin_obj.set_relations(&mut relation_obj, string::utf8(b"tg_test"), USER, ts.ctx());
 
         ts.next_tx(USER);
 
         let coin = test_coin(&mut ts, 1000);
 
-        let account_id = account::create_new_account(&mut admin_obj, relations_id, ts.ctx());
+        let account_id = account::create_new_account(&relation_obj, ts.ctx());
 
         ts.next_tx(USER);
         
@@ -308,11 +325,11 @@ module sui_squard::account_tests {
 
         ts.next_tx(ADMIN);
 
-        let relations_recipient_id = admin_obj.set_relations(&mut option::none(), string::utf8(b"tg_test_recipient"), RECIPIENT, ts.ctx());
+        admin_obj.set_relations(&mut relation_obj, string::utf8(b"tg_test_recipient"), RECIPIENT, ts.ctx());
 
         ts.next_tx(RECIPIENT);
 
-        let recipient_account_id = account::create_new_account(&mut admin_obj, relations_recipient_id, ts.ctx());
+        let recipient_account_id = account::create_new_account(&relation_obj, ts.ctx());
 
         ts.next_tx(RECIPIENT);
         
@@ -333,17 +350,19 @@ module sui_squard::account_tests {
 
         ts.next_tx(ADMIN);
 
-        let mut admin_obj = ts.take_shared<Admin>();
+        let admin_obj = ts.take_from_sender<Admin>();
 
 
         ts.next_tx(ADMIN);
 
+        let mut relation_obj = ts.take_shared<Relation>();
 
-        let relations_id = admin_obj.set_relations(&mut option::none(), string::utf8(b"tg_test"), USER, ts.ctx());
+
+        admin_obj.set_relations(&mut relation_obj, string::utf8(b"tg_test"), USER, ts.ctx());
 
         ts.next_tx(USER);
 
-        let account_id = account::create_new_account(&mut admin_obj, relations_id, ts.ctx());
+        let account_id = account::create_new_account(&relation_obj, ts.ctx());
 
         ts.next_tx(USER);
         
@@ -351,11 +370,11 @@ module sui_squard::account_tests {
 
         ts.next_tx(ADMIN);
 
-        let relations_recipient_id = admin_obj.set_relations(&mut option::none(), string::utf8(b"tg_test_recipient"), RECIPIENT, ts.ctx());
+        admin_obj.set_relations(&mut relation_obj, string::utf8(b"tg_test_recipient"), RECIPIENT, ts.ctx());
 
         ts.next_tx(RECIPIENT);
 
-        let recipient_account_id = account::create_new_account(&mut admin_obj, relations_recipient_id, ts.ctx());
+        let recipient_account_id = account::create_new_account(&relation_obj, ts.ctx());
 
         ts.next_tx(RECIPIENT);
         

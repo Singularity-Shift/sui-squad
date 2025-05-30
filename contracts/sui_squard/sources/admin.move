@@ -1,7 +1,7 @@
 module sui_squard::admin {
   use std::string::String;
   use sui::package;
-  use sui::{dynamic_object_field as dof, event};
+  use sui::event;
 
   const EONLY_AUTHORIZED_ACCOUNTS_CAN_EXECUTE_THIS_OPERATION: u64 = 1;
   const ETELEGRAM_DOES_NOT_EXIST: u64 = 2;
@@ -20,10 +20,9 @@ module sui_squard::admin {
     telegram_id: String,
   }
 
-  public struct Relations has key, store {
+  public struct Relation has key, store {
     id: UID,
-    relations_id: ID,
-    relations: vector<AccountRelation>,
+    users: vector<AccountRelation>,
   }
 
   public struct AdminEvent has copy, drop{
@@ -33,7 +32,7 @@ module sui_squard::admin {
 
   public struct RelationEvent has copy, drop {
     relation_id: ID,
-    relations: vector<String>,
+    users: vector<String>,
   }
 
   public struct ADMIN has drop {}
@@ -48,52 +47,38 @@ module sui_squard::admin {
 
   public fun initialize_admin(admin_cap: AdminCap, ctx: &mut TxContext) {
     let admin = Admin { id: object::new(ctx), account: ctx.sender() };
+    let relation = Relation { id: object::new(ctx), users: vector::empty() };
 
     let admin_id = object::uid_to_inner(&admin.id);
+    
+    let relation_id = object::uid_to_inner(&relation.id);
 
     let AdminCap { id } = admin_cap;
     object::delete(id);
 
     event::emit(AdminEvent { admin_id, wallet: ctx.sender() });
 
-    transfer::share_object(admin);
+    event::emit(RelationEvent { relation_id, users: vector::empty() });
+
+    transfer::transfer(admin, ctx.sender());
+    transfer::share_object(relation);
   }
 
-  public fun set_relations(self: &mut Admin, relations_id_opt: &mut Option<ID>, telegram_id: String, user: address, ctx: &mut TxContext): ID {
+  public fun set_relations(self: &Admin, relation: &mut Relation, telegram_id: String, user: address, ctx: &mut TxContext) {
     assert!(self.account == ctx.sender(), EONLY_AUTHORIZED_ACCOUNTS_CAN_EXECUTE_THIS_OPERATION);
+ 
+    let some_relation = relation.users.find_index!(|r| r.account == user);
 
-    let relations_id;
-    if(option::is_some<ID>(relations_id_opt)) {
-      relations_id = option::extract(relations_id_opt);
-      let relations = dof::borrow_mut<ID, Relations>(self.borrow_mut(), relations_id);
+    if(option::is_none(&some_relation)) {
 
-      let some_relation = relations.relations.find_index!(|r| r.account == user);
+      let relations_id = object::uid_to_inner(&relation.id);
+      let account_relation = AccountRelation { account: user, telegram_id };
 
-      if(option::is_none(&some_relation)) {
-        let relation = AccountRelation { account: user, telegram_id };
+      relation.users.push_back(account_relation);
 
-        relations.relations.push_back(relation);
-
-        let relations_vector = relations.relations.map_ref!(|r| r.telegram_id);
-        event::emit(RelationEvent { relation_id: relations_id, relations: relations_vector });
-      }
-    } else {
-      let id = object::new(ctx);
-      relations_id = object::uid_to_inner(&id);
-
-      let mut relations = Relations { id, relations_id, relations: vector::empty() };
-      let relation = AccountRelation { account: user, telegram_id };
-
-      relations.relations.push_back(relation);
-
-      let relations_vector = relations.relations.map_ref!(|r| r.telegram_id);
-
-      dof::add(&mut self.id, relations_id, relations);
-
-      event::emit(RelationEvent { relation_id: relations_id, relations: relations_vector });
-    };
-
-    relations_id
+      let relations_vector = relation.users.map_ref!(|r| r.telegram_id);
+      event::emit(RelationEvent { relation_id: relations_id, users: relations_vector });
+    }
   }
 
   public(package) fun borrow_mut(self: &mut Admin): &mut UID {
@@ -104,16 +89,14 @@ module sui_squard::admin {
     &self.id
   }
 
-  public(package) fun borrow_telegram_id(self: &Admin, relations_id: ID, account: address): &String {
-    let relations = dof::borrow<ID, Relations>(self.borrow(), relations_id);
-
-    let mut index_opt = relations.relations.find_index!(|r| r.account == account);
+  public(package) fun borrow_telegram_id(relation: &Relation, account: address): &String {
+    let mut index_opt = relation.users.find_index!(|r| r.account == account);
 
     assert!(option::is_some(&index_opt), ETELEGRAM_DOES_NOT_EXIST);
 
     let index = index_opt.extract();
 
-    let relation = relations.relations.borrow(index);
+    let relation = relation.users.borrow(index);
 
     &relation.telegram_id
   }

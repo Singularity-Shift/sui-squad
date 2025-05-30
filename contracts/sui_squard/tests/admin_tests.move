@@ -4,6 +4,7 @@ module sui_squard::admin_tests {
     use sui_squard::admin::{Self, Admin};
     use sui::test_scenario::{Self as ts};
     use std::string;
+    use sui_squard::admin::Relation;
 
     const EVALUES_DOES_NOT_MATCH: u64 = 1;
 
@@ -30,17 +31,20 @@ module sui_squard::admin_tests {
 
         ts.next_tx(ADMIN);
 
-        let mut admin_obj = ts.take_shared<Admin>();
+        let admin_obj = ts.take_from_sender<Admin>();
 
-        let relations_id = admin_obj.set_relations(&mut option::none(), string::utf8(b"tg_test"), USER, ts.ctx());
+        let mut relation_obj = ts.take_shared<Relation>();
+
+        admin_obj.set_relations(&mut relation_obj, string::utf8(b"tg_test"), USER, ts.ctx());
         
         ts.next_tx(ADMIN);
 
-        let telegram_id = admin_obj.borrow_telegram_id(relations_id, USER);
+        let telegram_id = relation_obj.borrow_telegram_id(USER);
 
         assert!(telegram_id == string::utf8(b"tg_test"), EVALUES_DOES_NOT_MATCH);
 
-        ts::return_shared(admin_obj);
+        ts::return_to_address(ADMIN, admin_obj);
+        ts::return_shared(relation_obj);
         
         ts::end(ts);
     }
@@ -53,13 +57,15 @@ module sui_squard::admin_tests {
 
         ts.next_tx(ADMIN);
 
-        let mut admin_obj = ts.take_shared<Admin>();
+        let admin_obj = ts.take_from_sender<Admin>();
 
-        let relations_id = admin_obj.set_relations(&mut option::none(), string::utf8(b"tg_test"), USER, ts.ctx());
+        let mut relation_obj = ts.take_shared<Relation>();
+
+        admin_obj.set_relations(&mut relation_obj, string::utf8(b"tg_test"), USER, ts.ctx());
         
         ts.next_tx(ADMIN);
 
-        admin_obj.borrow_telegram_id(relations_id, OTHER_USER);
+        relation_obj.borrow_telegram_id(OTHER_USER);
 
         abort 2
     }
