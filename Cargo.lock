@@ -7799,6 +7799,7 @@ dependencies = [
  "anyhow",
  "axum 0.8.4",
  "dotenvy",
+ "fastcrypto-zkp",
  "open-ai-rust-responses-by-sshift",
  "reqwest 0.12.18",
  "serde",

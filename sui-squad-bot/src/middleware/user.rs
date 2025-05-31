@@ -1,5 +1,6 @@
 use std::path::PathBuf;
 
+use fastcrypto_zkp::bn254::zk_login::ZkLoginInputs;
 use squard_connect::client::squard_connect::SquardConnect;
 use sui_sdk::types::base_types::SuiAddress;
 use sui_squad_core::{commands::bot_commands::LoginState, helpers::dtos::UserPayload};
@@ -22,10 +23,12 @@ pub async fn check_user(
     path: PathBuf,
 ) {
     let mut wallet: Option<SuiAddress> = None;
+    let mut zk_login_inputs_datas: Option<ZkLoginInputs> = None;
 
     if msg.chat.is_group() {
         if let Ok(login_state) = dialogue.get().await {
             if let Some(LoginState::Authenticated(zk_login_inputs)) = login_state {
+                zk_login_inputs_datas = Some(zk_login_inputs.clone());
                 wallet = Some(squard_connect_client.get_sender(zk_login_inputs));
             }
         };
