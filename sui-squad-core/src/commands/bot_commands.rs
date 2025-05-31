@@ -9,6 +9,8 @@ use teloxide::macros::BotCommands;
 pub enum Command {
     #[command(description = "Send a prompt to the AI assistant.")]
     Prompt(String),
+    #[command(description = "Send a prompt to the AI assistant (short alias for /prompt).")]
+    P(String),
     #[command(description = "Show Squard prompt examples.")]
     PromptExamples,
     #[command(description = "Display this help message.")]
