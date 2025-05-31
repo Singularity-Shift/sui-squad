@@ -1,25 +1,22 @@
 mod bot_manage;
-mod tools;
-mod services;
 mod middleware;
+mod onchain;
+mod services;
+mod tools;
 
 use anyhow::Result;
 use bot_manage::handler_tree::handler_tree;
 use dotenvy::dotenv;
 use services::services::Services;
 use squard_connect::{client::squard_connect::SquardConnect, service::dtos::Network};
-use std::env;
 use std::time::Duration;
+use std::{env, path::PathBuf};
 use sui_sdk::SuiClientBuilder;
 use sui_squad_core::{
-    ai::ResponsesClient, 
-    commands::bot_commands::LoginState, 
-    config::Config,
-    conversation::ConversationCache
+    ai::ResponsesClient, commands::bot_commands::LoginState, config::Config,
+    conversation::ConversationCache,
 };
-use teloxide::{
-    dispatching::dialogue::InMemStorage, prelude::*, types::BotCommand
-};
+use teloxide::{dispatching::dialogue::InMemStorage, prelude::*, types::BotCommand};
 use tracing_subscriber;
 
 #[tokio::main]
@@ -48,10 +45,14 @@ async fn main() -> Result<()> {
 
     let services = Services::new();
 
+    let mut path = PathBuf::new();
+
+    path.push(env::var("KEYSTORE_PATH").expect("KEYSTORE_PATH is not set"));
+
     // Create conversation cache with 10-minute TTL
     let conversation_cache = ConversationCache::new(Duration::from_secs(600));
     let cache_for_cleanup = conversation_cache.clone();
-    
+
     // Spawn cleanup task that runs every minute
     tokio::spawn(async move {
         let mut interval = tokio::time::interval(Duration::from_secs(60));
@@ -83,9 +84,10 @@ async fn main() -> Result<()> {
         .dependencies(dptree::deps![
             responses_client.clone(),
             InMemStorage::<LoginState>::new(),
-            squard_connect_client, 
+            squard_connect_client,
             services,
-            conversation_cache
+            conversation_cache,
+            path
         ])
         .enable_ctrlc_handler()
         .build()

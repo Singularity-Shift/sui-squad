@@ -20,4 +20,5 @@ pub enum LoginState {
     #[default]
     Login,
     Authenticated(ZkLoginInputs),
+    Account(String),
 }

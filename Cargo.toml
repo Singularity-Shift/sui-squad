@@ -32,3 +32,4 @@ axum = {version = "0.8.4", features = ["macros"] }
 tower = "0.5.2"
 tower-http = "0.6.4"
 sui-squad-core = { path = "./sui-squad-core" }
+sui_keys = {git = "https://github.com/mystenlabs/sui", package = "sui-keys" }
