@@ -1,25 +1,39 @@
-use std::{env, path::PathBuf};
+use std::env;
 
 use anyhow::Result;
+use fastcrypto::hash::HashFunction;
+use fastcrypto::{
+    ed25519::Ed25519KeyPair,
+    traits::{KeyPair, Signer},
+};
 use fastcrypto_zkp::bn254::zk_login::ZkLoginInputs;
+use rand::{SeedableRng, rngs::StdRng};
+use shared_crypto::intent::{Intent, IntentMessage};
+use sui_sdk::rpc_types::SuiTransactionBlockResponseOptions;
+use sui_sdk::types::quorum_driver_types::ExecuteTransactionRequestType;
+use sui_sdk::types::signature::GenericSignature;
+use sui_sdk::types::transaction::Transaction;
 use sui_sdk::{
     SuiClient,
     json::SuiJsonValue,
-    rpc_types::{EventFilter, SuiTransactionBlockResponseOptions},
+    rpc_types::EventFilter,
     types::{
         base_types::{ObjectID, SuiAddress},
-        quorum_driver_types::ExecuteTransactionRequestType,
-        utils::sign_zklogin_tx_with_default_proof,
+        crypto::{DefaultHash, SuiKeyPair},
+        zk_login_authenticator::ZkLoginAuthenticator,
     },
 };
-use sui_squad_core::package::dto::Event;
+use sui_squad_core::{helpers::dtos::User, package::dto::Event};
 
 pub async fn create_account_if_not_exists(
     sender: SuiAddress,
-    path: PathBuf,
     node: &SuiClient,
+    user: User,
+    zk_login_inputs: ZkLoginInputs,
 ) -> Result<String> {
     let package_id = env::var("SUI_SQUARD_PACKAGE_ID").expect("SUI_SQUARD_PACKAGE_ID is not set");
+    let sui_key_pair =
+        SuiKeyPair::Ed25519(Ed25519KeyPair::generate(&mut StdRng::from_seed([0; 32])));
 
     let account_events = node
         .event_api()
@@ -83,17 +97,27 @@ pub async fn create_account_if_not_exists(
             )
             .await?;
 
-        let (sender_adreess, transaction, generic_signature) =
-            sign_zklogin_tx_with_default_proof(tx.clone(), true);
+        let intent_message = IntentMessage::new(Intent::sui_transaction(), tx.clone());
 
-        println!("Sender: {}", sender_adreess);
+        let raw_tx = bcs::to_bytes(&intent_message).expect("Failed to serialize intent message");
 
-        println!("Transaction: {:?}", transaction.tx_signatures());
+        let mut hasher = DefaultHash::default();
+
+        hasher.update(raw_tx.clone());
+
+        let digest = hasher.finalize().digest;
+
+        let signature = sui_key_pair.sign(&digest);
+
+        let zk_login_authenticator =
+            ZkLoginAuthenticator::new(zk_login_inputs, user.max_epoch, signature);
+
+        let generic_signature = GenericSignature::from(zk_login_authenticator);
 
         let transaction_response = node
             .quorum_driver_api()
             .execute_transaction_block(
-                transaction,
+                Transaction::from_generic_sig_data(tx.clone(), vec![generic_signature]),
                 SuiTransactionBlockResponseOptions::full_content(),
                 Some(ExecuteTransactionRequestType::WaitForLocalExecution),
             )
@@ -103,7 +127,7 @@ pub async fn create_account_if_not_exists(
         println!("{}", transaction_response);
         println!("Transaction created successfully: {:?}", tx);
 
-        Ok(transaction_response.to_string())
+        Ok("Transaction created".to_string())
     } else {
         Ok(account_event
             .unwrap()

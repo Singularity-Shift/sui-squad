@@ -12,7 +12,10 @@ use sui_sdk::{
         transaction::Transaction,
     },
 };
-use sui_squad_core::{helpers::dtos::UserPayload, package::dto::Event};
+use sui_squad_core::{
+    helpers::dtos::{User, UserPayload},
+    package::dto::Event,
+};
 
 use crate::{error::ErrorKeeper, state::KeeperState};
 
@@ -20,10 +23,29 @@ use crate::{error::ErrorKeeper, state::KeeperState};
 pub async fn create_user(
     State(keeper_state): State<Arc<KeeperState>>,
     user: Json<UserPayload>,
-) -> Result<()> {
+) -> Result<Json<User>> {
     let package_id = env::var("SUI_SQUARD_PACKAGE_ID").expect("SUI_SQUARD_PACKAGE_ID is not set");
 
     let node = keeper_state.squard_connect_client().get_node();
+
+    let key = format!("user:{}", user.telegram_id.clone());
+
+    let user_data_vec = keeper_state
+        .db()
+        .get(key)
+        .map_err(|e| ErrorKeeper {
+            message: e.to_string(),
+            status: 500,
+        })?
+        .ok_or_else(|| ErrorKeeper {
+            message: "User not found".to_string(),
+            status: 404,
+        })?;
+
+    let user_data: User = serde_json::from_slice(&user_data_vec).map_err(|e| ErrorKeeper {
+        message: e.to_string(),
+        status: 500,
+    })?;
 
     let admin = keeper_state.admin();
 
@@ -112,7 +134,7 @@ pub async fn create_user(
 
     if let Some(relation) = relation_str {
         println!("User already created: {:?}", relation);
-        return Ok(());
+        return Ok(Json(user_data));
     };
 
     let admin_id = admin_event
@@ -196,5 +218,5 @@ pub async fn create_user(
     println!("{}", transaction_response);
     println!("Transaction created successfully: {:?}", tx);
 
-    Ok(())
+    Ok(Json(user_data))
 }

@@ -1,5 +1,3 @@
-use std::path::PathBuf;
-
 use fastcrypto_zkp::bn254::zk_login::ZkLoginInputs;
 use squard_connect::client::squard_connect::SquardConnect;
 use sui_sdk::types::base_types::SuiAddress;
@@ -20,15 +18,14 @@ pub async fn check_user(
     dialogue: Dialogue<LoginState, InMemStorage<LoginState>>,
     squard_connect_client: SquardConnect,
     services: Services,
-    path: PathBuf,
 ) {
     let mut wallet: Option<SuiAddress> = None;
-    let mut zk_login_inputs_datas: Option<ZkLoginInputs> = None;
+    let mut zk_login_inputs_data: Option<ZkLoginInputs> = None;
 
     if msg.chat.is_group() {
         if let Ok(login_state) = dialogue.get().await {
             if let Some(LoginState::Authenticated(zk_login_inputs)) = login_state {
-                zk_login_inputs_datas = Some(zk_login_inputs.clone());
+                zk_login_inputs_data = Some(zk_login_inputs.clone());
                 wallet = Some(squard_connect_client.get_sender(zk_login_inputs));
             }
         };
@@ -49,10 +46,12 @@ pub async fn check_user(
                 return;
             }
 
-            if let Ok(_user) = user_result {
+            if let Ok(user) = user_result {
                 let node = squard_connect_client.get_node();
 
-                let account_id = create_account_if_not_exists(wallet, path, node).await;
+                let account_id =
+                    create_account_if_not_exists(wallet, node, user, zk_login_inputs_data.unwrap())
+                        .await;
 
                 if let Ok(account_id) = account_id {
                     let state = dialogue.update(LoginState::Account(account_id)).await;

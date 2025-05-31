@@ -7798,9 +7798,12 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "axum 0.8.4",
+ "bcs",
  "dotenvy",
+ "fastcrypto 0.1.8",
  "fastcrypto-zkp",
  "open-ai-rust-responses-by-sshift",
+ "rand 0.8.5",
  "reqwest 0.12.18",
  "serde",
  "serde_json",
