@@ -13,7 +13,6 @@ module sui_squard::account_tests {
     const ADMIN: address = @0x100;
     const USER: address = @0x200;
     const RECIPIENT: address = @0x300;
-    const FAKE_USER: address = @0x400;
 
   fun test_coin(ts: &mut Scenario, amount: u64): Coin<SUI> {
     coin::mint_for_testing<SUI>(amount, ts.ctx())
@@ -27,30 +26,13 @@ module sui_squard::account_tests {
 
         ts.next_tx(ADMIN);
 
-        let mut admin_obj = ts.take_shared<Admin>();
+        let admin_obj = ts.take_shared<Admin>();
 
-        ts.next_tx(ADMIN);
-
-        ts.next_tx(ADMIN);
-
-
-        let relations_id = admin_obj.set_relations(&mut option::none(), string::utf8(b"tg_test"), USER, ts.ctx());
-
-        ts.next_tx(USER);
-
-        let account_id = account::create_new_account(&mut admin_obj, relations_id, ts.ctx());
+        let account_id = account::create_new_account(&admin_obj, string::utf8(b"tg_test"), ts.ctx());
 
         ts.next_tx(USER);
         
-        let account_obj = ts.take_shared_by_id<Account>(account_id);
-
-        let tg_account = account_obj.get_address();
-
-        assert!(tg_account == ts.ctx().sender(), EVALUES_DOES_NOT_MATCH);
-
-        ts::return_shared(account_obj);
-
-        ts::return_shared(admin_obj);
+        let _account_obj = ts.take_shared_by_id<Account>(account_id);
 
         ts::end(ts);
     } 
@@ -63,25 +45,20 @@ module sui_squard::account_tests {
 
         ts.next_tx(ADMIN);
 
-        let mut admin_obj = ts.take_shared<Admin>();
+        let admin_obj = ts.take_shared<Admin>();
 
         ts.next_tx(ADMIN);
 
         ts.next_tx(ADMIN);
 
-        let relations_id = admin_obj.set_relations(&mut option::none(), string::utf8(b"tg_test"), USER, ts.ctx());
 
         ts.next_tx(USER);
 
-        let coin = test_coin(&mut ts, 1000);
-
-        let account_id = account::create_new_account(&mut admin_obj, relations_id, ts.ctx());
+        let account_id = account::create_new_account(&admin_obj, string::utf8(b"tg_test"), ts.ctx());
 
         ts.next_tx(USER);
         
-        let mut account_obj = ts.take_shared_by_id<Account>(account_id);
-
-        account_obj.fund<SUI>(coin, ts.ctx());
+        let account_obj = ts.take_shared_by_id<Account>(account_id);
 
         ts.next_tx(USER);
 
@@ -104,25 +81,17 @@ module sui_squard::account_tests {
 
         ts.next_tx(ADMIN);
 
-        let mut admin_obj = ts.take_shared<Admin>();
+        let admin_obj = ts.take_shared<Admin>();
 
         ts.next_tx(ADMIN);
 
-        let relations_id = admin_obj.set_relations(&mut option::none(), string::utf8(b"tg_test"), USER, ts.ctx());
+        let account_id = account::create_new_account(&admin_obj, string::utf8(b"test_tg"), ts.ctx());
 
-        ts.next_tx(USER);
-
-        let coin = test_coin(&mut ts, 1000);
-
-        let account_id = account::create_new_account(&mut admin_obj, relations_id, ts.ctx());
-
-        ts.next_tx(USER);
+        ts.next_tx(ADMIN);
         
         let mut account_obj = ts.take_shared_by_id<Account>(account_id);
 
-        account_obj.fund<SUI>(coin, ts.ctx());
-
-        account_obj.withdraw<SUI>(500, ts.ctx());
+        account_obj.withdraw<SUI>(&admin_obj ,500, USER, ts.ctx());
 
         let account_balance = account_obj.get_balance<SUI>();
 
@@ -143,41 +112,28 @@ module sui_squard::account_tests {
 
         ts.next_tx(ADMIN);
 
-        let mut admin_obj = ts.take_shared<Admin>();
+        let admin_obj = ts.take_shared<Admin>();
 
 
         ts.next_tx(ADMIN);
 
+        let account_id = account::create_new_account(&admin_obj, string::utf8(b"test_tg"), ts.ctx());
 
-        let relations_id = admin_obj.set_relations(&mut option::none(), string::utf8(b"tg_test"), USER, ts.ctx());
-
-        ts.next_tx(USER);
-
-        let coin = test_coin(&mut ts, 1000);
-
-        let account_id = account::create_new_account(&mut admin_obj, relations_id, ts.ctx());
-
-        ts.next_tx(USER);
+        ts.next_tx(ADMIN);
         
         let mut account_obj = ts.take_shared_by_id<Account>(account_id);
 
-        account_obj.fund<SUI>(coin, ts.ctx());
-
         ts.next_tx(ADMIN);
 
-        let relations_recipient_id = admin_obj.set_relations(&mut option::none(), string::utf8(b"tg_test_recipient"), RECIPIENT, ts.ctx());
-
-        ts.next_tx(RECIPIENT);
-
-        let recipient_account_id = account::create_new_account(&mut admin_obj, relations_recipient_id, ts.ctx());
+        let recipient_account_id = account::create_new_account(&admin_obj, string::utf8(b"test_2") , ts.ctx());
 
         ts.next_tx(RECIPIENT);
         
         let mut recipient_account_obj = ts.take_shared_by_id<Account>(recipient_account_id);
 
-        ts.next_tx(USER);
+        ts.next_tx(ADMIN);
 
-        account_obj.payment<SUI>( &mut recipient_account_obj, 50, ts.ctx());
+        account_obj.payment<SUI>(&admin_obj, &mut recipient_account_obj, 50, ts.ctx());
 
         ts.next_tx(RECIPIENT);
 
@@ -202,45 +158,36 @@ module sui_squard::account_tests {
 
         ts.next_tx(ADMIN);
 
-        let mut admin_obj = ts.take_shared<Admin>();
+        let admin_obj = ts.take_shared<Admin>();
 
 
         ts.next_tx(ADMIN);
 
 
-        let relations_id = admin_obj.set_relations(&mut option::none(), string::utf8(b"tg_test"), USER, ts.ctx());
 
         ts.next_tx(USER);
 
-        let coin = test_coin(&mut ts, 1000);
-
-        let account_id = account::create_new_account(&mut admin_obj, relations_id, ts.ctx());
+        let account_id = account::create_new_account(&admin_obj, string::utf8(b"test_tg"), ts.ctx());
 
         ts.next_tx(USER);
         
         let mut account_obj = ts.take_shared_by_id<Account>(account_id);
 
-        account_obj.fund<SUI>(coin, ts.ctx());
-
         ts.next_tx(ADMIN);
 
-        let relations_recipient_id = admin_obj.set_relations(&mut option::none(), string::utf8(b"tg_test_recipient"), RECIPIENT, ts.ctx());
+        let recipient_account_id = account::create_new_account(&admin_obj, string::utf8(b"test_tg"), ts.ctx());
 
-        ts.next_tx(RECIPIENT);
-
-        let recipient_account_id = account::create_new_account(&mut admin_obj, relations_recipient_id, ts.ctx());
-
-        ts.next_tx(RECIPIENT);
+        ts.next_tx(ADMIN);
         
         let mut recipient_account_obj = ts.take_shared_by_id<Account>(recipient_account_id);
 
+        ts.next_tx(ADMIN);
+
+        account_obj.payment<SUI>(&admin_obj, &mut recipient_account_obj, 50, ts.ctx());
+
         ts.next_tx(USER);
 
-        account_obj.payment<SUI>(&mut recipient_account_obj, 50, ts.ctx());
-
-        ts.next_tx(USER);
-
-        account_obj.payment<SUI>(&mut recipient_account_obj, 50, ts.ctx());
+        account_obj.payment<SUI>(&admin_obj, &mut recipient_account_obj, 50, ts.ctx());
 
         ts.next_tx(RECIPIENT);
 
@@ -255,116 +202,5 @@ module sui_squard::account_tests {
         ts::return_shared(admin_obj);
 
         ts::end(ts);
-    }
-
-    #[test, expected_failure(abort_code = sui_squard::admin::ETELEGRAM_DOES_NOT_EXIST)]
-    fun test_create_account_with_not_existing_tg() {
-        let mut ts = ts::begin(ADMIN);
-
-        admin::init_test( ts.ctx());
-
-        ts.next_tx(ADMIN);
-
-        let mut admin_obj = ts.take_shared<Admin>();
-
-        ts.next_tx(ADMIN);
-
-        let relations_id = admin_obj.set_relations(&mut option::none(), string::utf8(b"tg_test"), USER, ts.ctx());
-
-        ts.next_tx(FAKE_USER);  
-
-        account::create_new_account(&mut admin_obj, relations_id, ts.ctx());
-
-        abort 2
-    }
-
-    #[test, expected_failure(abort_code = sui_squard::account::EMismatchedSenderAccount)]
-    fun pay_with_not_existing_account() {
-        let mut ts = ts::begin(ADMIN);
-
-        admin::init_test( ts.ctx());
-
-        ts.next_tx(ADMIN);
-
-        let mut admin_obj = ts.take_shared<Admin>();
-
-
-        ts.next_tx(ADMIN);
-
-
-        let relations_id = admin_obj.set_relations(&mut option::none(), string::utf8(b"tg_test"), USER, ts.ctx());
-
-        ts.next_tx(USER);
-
-        let coin = test_coin(&mut ts, 1000);
-
-        let account_id = account::create_new_account(&mut admin_obj, relations_id, ts.ctx());
-
-        ts.next_tx(USER);
-        
-        let mut account_obj = ts.take_shared_by_id<Account>(account_id);
-
-        account_obj.fund<SUI>(coin, ts.ctx());
-
-        ts.next_tx(ADMIN);
-
-        let relations_recipient_id = admin_obj.set_relations(&mut option::none(), string::utf8(b"tg_test_recipient"), RECIPIENT, ts.ctx());
-
-        ts.next_tx(RECIPIENT);
-
-        let recipient_account_id = account::create_new_account(&mut admin_obj, relations_recipient_id, ts.ctx());
-
-        ts.next_tx(RECIPIENT);
-        
-        let mut recipient_account_obj = ts.take_shared_by_id<Account>(recipient_account_id);
-
-        ts.next_tx(FAKE_USER);
-
-        account_obj.payment<SUI>(&mut recipient_account_obj, 50, ts.ctx());
-
-        abort 1
-    }
-
-    #[test, expected_failure(abort_code = sui_squard::account::ENotFoundBalance)]
-    fun pay_with_not_existing_object() {
-        let mut ts = ts::begin(ADMIN);
-
-        admin::init_test( ts.ctx());
-
-        ts.next_tx(ADMIN);
-
-        let mut admin_obj = ts.take_shared<Admin>();
-
-
-        ts.next_tx(ADMIN);
-
-
-        let relations_id = admin_obj.set_relations(&mut option::none(), string::utf8(b"tg_test"), USER, ts.ctx());
-
-        ts.next_tx(USER);
-
-        let account_id = account::create_new_account(&mut admin_obj, relations_id, ts.ctx());
-
-        ts.next_tx(USER);
-        
-        let mut account_obj = ts.take_shared_by_id<Account>(account_id);
-
-        ts.next_tx(ADMIN);
-
-        let relations_recipient_id = admin_obj.set_relations(&mut option::none(), string::utf8(b"tg_test_recipient"), RECIPIENT, ts.ctx());
-
-        ts.next_tx(RECIPIENT);
-
-        let recipient_account_id = account::create_new_account(&mut admin_obj, relations_recipient_id, ts.ctx());
-
-        ts.next_tx(RECIPIENT);
-        
-        let mut recipient_account_obj = ts.take_shared_by_id<Account>(recipient_account_id);
-
-        ts.next_tx(USER);
-
-        account_obj.payment<SUI>(&mut recipient_account_obj, 50, ts.ctx());
-
-        abort 3
     }
 }
