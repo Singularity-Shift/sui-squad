@@ -49,9 +49,15 @@ pub async fn check_user(
             if let Ok(user) = user_result {
                 let node = squard_connect_client.get_node();
 
-                let account_id =
-                    create_account_if_not_exists(wallet, node, user, zk_login_inputs_data.unwrap())
-                        .await;
+                let squard_connect_client = squard_connect_client.clone();
+
+                let account_id = create_account_if_not_exists(
+                    node,
+                    user,
+                    zk_login_inputs_data.unwrap(),
+                    squard_connect_client,
+                )
+                .await;
 
                 if let Ok(account_id) = account_id {
                     let state = dialogue.update(LoginState::Account(account_id)).await;

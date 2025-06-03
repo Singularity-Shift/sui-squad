@@ -35,16 +35,15 @@ pub struct UserPayload {
     pub wallet: String,
 }
 
-impl From<JwtPayload> for User  {
+impl From<JwtPayload> for User {
     fn from(jwt_payload: JwtPayload) -> Self {
-
-        Self { 
-            jwt: jwt_payload.token, 
-            bot_id: jwt_payload.bot_id, 
+        Self {
+            jwt: jwt_payload.token,
+            bot_id: jwt_payload.bot_id,
             network: jwt_payload.network,
             public_key: jwt_payload.public_key,
             max_epoch: jwt_payload.max_epoch,
-            randomness: jwt_payload.randomness
+            randomness: jwt_payload.randomness,
         }
     }
 }

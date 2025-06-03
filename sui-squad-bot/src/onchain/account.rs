@@ -1,4 +1,6 @@
 use std::env;
+use std::path::PathBuf;
+use std::str::FromStr;
 
 use anyhow::Result;
 use fastcrypto::hash::HashFunction;
@@ -9,7 +11,10 @@ use fastcrypto::{
 use fastcrypto_zkp::bn254::zk_login::ZkLoginInputs;
 use rand::{SeedableRng, rngs::StdRng};
 use shared_crypto::intent::{Intent, IntentMessage};
+use squard_connect::client::squard_connect::SquardConnect;
+use sui_keys::keystore::{AccountKeystore, FileBasedKeystore};
 use sui_sdk::rpc_types::SuiTransactionBlockResponseOptions;
+use sui_sdk::types::crypto::PublicKey;
 use sui_sdk::types::quorum_driver_types::ExecuteTransactionRequestType;
 use sui_sdk::types::signature::GenericSignature;
 use sui_sdk::types::transaction::Transaction;
@@ -19,21 +24,38 @@ use sui_sdk::{
     rpc_types::EventFilter,
     types::{
         base_types::{ObjectID, SuiAddress},
-        crypto::{DefaultHash, SuiKeyPair},
+        crypto::{DefaultHash, Signature, SuiKeyPair},
         zk_login_authenticator::ZkLoginAuthenticator,
     },
 };
 use sui_squad_core::{helpers::dtos::User, package::dto::Event};
 
 pub async fn create_account_if_not_exists(
-    sender: SuiAddress,
     node: &SuiClient,
     user: User,
     zk_login_inputs: ZkLoginInputs,
+    mut squard_connect_client: SquardConnect,
 ) -> Result<String> {
     let package_id = env::var("SUI_SQUARD_PACKAGE_ID").expect("SUI_SQUARD_PACKAGE_ID is not set");
-    let sui_key_pair =
-        SuiKeyPair::Ed25519(Ed25519KeyPair::generate(&mut StdRng::from_seed([0; 32])));
+    let keystore_file = env::var("KEYSTORE_PATH").expect("KEYSTORE_PATH must be set");
+
+    let mut path = PathBuf::new();
+    path.push(keystore_file);
+
+    let keystore = FileBasedKeystore::new(&path).expect("Failed to create keystore");
+
+    squard_connect_client.set_jwt(user.jwt);
+    let address = squard_connect_client.get_address().await.unwrap().address;
+    let sender = SuiAddress::from_str(&address).unwrap();
+
+    println!("Sender: {}", sender);
+
+    let public_key = PublicKey::from_str(&user.public_key).unwrap();
+
+    let address = SuiAddress::from(&public_key);
+    println!("Address: {}", address);
+
+    let sui_key_pair = keystore.get_key(&address).unwrap();
 
     let account_events = node
         .event_api()
@@ -95,19 +117,12 @@ pub async fn create_account_if_not_exists(
                 gas_budget,
                 None,
             )
-            .await?;
+            .await
+            .unwrap();
 
         let intent_message = IntentMessage::new(Intent::sui_transaction(), tx.clone());
 
-        let raw_tx = bcs::to_bytes(&intent_message).expect("Failed to serialize intent message");
-
-        let mut hasher = DefaultHash::default();
-
-        hasher.update(raw_tx.clone());
-
-        let digest = hasher.finalize().digest;
-
-        let signature = sui_key_pair.sign(&digest);
+        let signature = Signature::new_secure(&intent_message, sui_key_pair);
 
         let zk_login_authenticator =
             ZkLoginAuthenticator::new(zk_login_inputs, user.max_epoch, signature);

@@ -5,14 +5,15 @@ use crate::tools::{
 use anyhow::Result as AnyhowResult;
 use reqwest::Url;
 use squard_connect::client::squard_connect::SquardConnect;
-use std::env;
+use std::{env, path::PathBuf};
 use sui_squad_core::{
-    ai::ResponsesClient, 
-    commands::bot_commands::LoginState, 
-    conversation::ConversationCache,
+    ai::ResponsesClient, commands::bot_commands::LoginState, conversation::ConversationCache,
 };
 use teloxide::{
-    dispatching::dialogue::InMemStorage, prelude::*, types::{InlineKeyboardButton, InlineKeyboardMarkup, Message, ParseMode}, Bot
+    Bot,
+    dispatching::dialogue::InMemStorage,
+    prelude::*,
+    types::{InlineKeyboardButton, InlineKeyboardMarkup, Message, ParseMode},
 };
 
 use super::dto::State;
@@ -32,17 +33,33 @@ pub async fn handle_login(
 
         let mut squard_connect_client = squard_connect_client.clone();
 
-        squard_connect_client.create_zkp_payload().await?;
+        let keystore_file = env::var("KEYSTORE_PATH").expect("KEYSTORE_PATH must be set");
 
-        let (network, public_key, max_epoch, randomness) = squard_connect_client.get_zk_proof_params();
+        let mut path = PathBuf::new();
+        path.push(keystore_file);
 
-        let state = State::from((user_id.to_string(), bot_id, network.to_string(), public_key, max_epoch, randomness));
+        squard_connect_client
+            .create_zkp_payload(path.clone())
+            .await?;
+
+        let (network, public_key, max_epoch, randomness) =
+            squard_connect_client.get_zk_proof_params();
+
+        let state = State::from((
+            user_id.to_string(),
+            bot_id,
+            network.to_string(),
+            public_key,
+            max_epoch,
+            randomness,
+        ));
 
         let host = env::var("HOST").expect("HOST env variable is not set");
         let redirect_url = format!("https://{host}/webhook/token");
-        
 
-        let url_to_build = squard_connect_client.get_url::<State>(redirect_url, Some(state)).await?;
+        let url_to_build = squard_connect_client
+            .get_url::<State>(redirect_url, Some(state), path)
+            .await?;
 
         let url = Url::parse(&url_to_build).unwrap();
 
@@ -71,44 +88,49 @@ pub async fn handle_prompt(
     conversation_cache: ConversationCache,
 ) -> AnyhowResult<Message> {
     // Get user key for cache (user_id, chat_id)
-    let user_key = (
-        msg.from().unwrap().id.to_string(), 
-        msg.chat.id.to_string()
-    );
-    
+    let user_key = (msg.from().unwrap().id.to_string(), msg.chat.id.to_string());
+
     // Get cached conversation ID
     let previous_response_id = conversation_cache.get(&user_key).await;
-    
+
     // Log conversation continuity status
     if let Some(ref prev_id) = previous_response_id {
         println!("🔗 Continuing conversation from: {}", prev_id);
     } else {
         println!("🆕 Starting new conversation");
     }
-    
+
     // Define custom function/tool schemas for the model
     let schema = get_schema();
-    
+
     // Call AI with function-calling enabled AND conversation continuity
     let mut current_response = responses_client
-        .generate_response(Some(&prompt_text), Some(schema.clone()), previous_response_id, None)
+        .generate_response(
+            Some(&prompt_text),
+            Some(schema.clone()),
+            previous_response_id,
+            None,
+        )
         .await?;
-    
+
     let mut iteration = 1;
     const MAX_ITERATIONS: usize = 5; // Prevent infinite loops
-    
+
     // Handle function calling loop
     while !current_response.tool_calls().is_empty() && iteration <= MAX_ITERATIONS {
-        println!("🔧 Iteration {}: Processing {} tool calls", 
-                iteration, current_response.tool_calls().len());
-        
+        println!(
+            "🔧 Iteration {}: Processing {} tool calls",
+            iteration,
+            current_response.tool_calls().len()
+        );
+
         let mut function_outputs = Vec::new();
-        
+
         // Process all tool calls
         for tool_call in current_response.tool_calls() {
             println!("   📞 Function: {} ({})", tool_call.name, tool_call.call_id);
             println!("   📋 Arguments: {}", tool_call.arguments);
-            
+
             // Execute function based on name
             let result = match tool_call.name.as_str() {
                 "get_wallet" => {
@@ -118,7 +140,8 @@ pub async fn handle_prompt(
                     let args: serde_json::Value = serde_json::from_str(&tool_call.arguments)
                         .unwrap_or_else(|_| serde_json::json!({}));
                     let token = args.get("token").and_then(|v| v.as_str()).map(String::from);
-                    handle_get_balance_tool(dialogue.clone(), squard_connect_client.clone(), token).await
+                    handle_get_balance_tool(dialogue.clone(), squard_connect_client.clone(), token)
+                        .await
                 }
                 "withdraw" => {
                     let args: serde_json::Value = serde_json::from_str(&tool_call.arguments)
@@ -132,38 +155,43 @@ pub async fn handle_prompt(
                 }
                 _ => format!("Unknown function call: {}", tool_call.name),
             };
-            
+
             println!("   ✅ Result: {}", result);
             function_outputs.push((tool_call.call_id.clone(), result));
         }
-        
+
         // Submit tool outputs and get next response using unified method
         current_response = responses_client
             .generate_response(
-                None, 
-                Some(schema.clone()), 
-                None, 
-                Some((current_response.id().to_string(), function_outputs))
+                None,
+                Some(schema.clone()),
+                None,
+                Some((current_response.id().to_string(), function_outputs)),
             )
             .await?;
-        
+
         iteration += 1;
     }
-    
+
     if iteration > MAX_ITERATIONS {
-        println!("⚠️ Stopped after {} iterations to prevent infinite loop", MAX_ITERATIONS);
+        println!(
+            "⚠️ Stopped after {} iterations to prevent infinite loop",
+            MAX_ITERATIONS
+        );
     }
-    
+
     // Update cache with new response ID for next turn
-    conversation_cache.update(user_key, current_response.id().to_string()).await;
-    
+    conversation_cache
+        .update(user_key, current_response.id().to_string())
+        .await;
+
     // Send final response
     let response_text = current_response.output_text();
     let message = bot
         .send_message(msg.chat.id, response_text)
         .parse_mode(ParseMode::Html)
         .await?;
-    
+
     Ok(message)
 }
 
@@ -175,7 +203,10 @@ pub async fn handle_get_wallet_tool(
 
     if let Some(LoginState::Authenticated(zk_login_inputs)) = state {
         let sender = squard_connect_client.get_sender(zk_login_inputs);
-        format!("Your wallet address is:\n<code>{}</code>", sender.to_string())
+        format!(
+            "Your wallet address is:\n<code>{}</code>",
+            sender.to_string()
+        )
     } else {
         "Error getting wallet address. Please login first.".to_string()
     }
