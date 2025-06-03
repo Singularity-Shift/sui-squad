@@ -6,6 +6,7 @@ module sui_squard::account_tests {
     use sui::test_scenario::{Self as ts, Scenario};
     use sui::coin::{Self, Coin};
     use sui::sui::SUI;
+    use sui::{dynamic_field as df};
     use std::string;
 
     const EVALUES_DOES_NOT_MATCH: u64 = 1;
@@ -13,6 +14,8 @@ module sui_squard::account_tests {
     const ADMIN: address = @0x100;
     const USER: address = @0x200;
     const RECIPIENT: address = @0x300;
+
+    public struct AccountBalance<phantom T> has copy, drop, store { }
 
   fun test_coin(ts: &mut Scenario, amount: u64): Coin<SUI> {
     coin::mint_for_testing<SUI>(amount, ts.ctx())
@@ -32,7 +35,11 @@ module sui_squard::account_tests {
 
         ts.next_tx(USER);
         
-        let _account_obj = ts.take_shared_by_id<Account>(account_id);
+        let account_obj = ts.take_shared_by_id<Account>(account_id);
+
+        ts::return_shared(account_obj);
+
+        ts::return_shared(admin_obj);
 
         ts::end(ts);
     } 
@@ -49,22 +56,25 @@ module sui_squard::account_tests {
 
         ts.next_tx(ADMIN);
 
-        ts.next_tx(ADMIN);
-
-
-        ts.next_tx(USER);
-
         let account_id = account::create_new_account(&admin_obj, string::utf8(b"tg_test"), ts.ctx());
 
         ts.next_tx(USER);
         
-        let account_obj = ts.take_shared_by_id<Account>(account_id);
+        let mut account_obj = ts.take_shared_by_id<Account>(account_id);
+
+        let coin = test_coin(&mut ts, 1000);
+
+        let account_balance_type = AccountBalance<SUI> { };
+
+        let account = account_obj.borrow_mut();
+
+        df::add(account, account_balance_type, coin);
 
         ts.next_tx(USER);
 
-        let account_balance = account_obj.get_balance<SUI>();
+        let balance: &Coin<SUI> = df::borrow(account, account_balance_type);
 
-        assert!(account_balance == 1000, EVALUES_DOES_NOT_MATCH);
+        assert!(        balance.value() == 1000, EVALUES_DOES_NOT_MATCH);
 
         ts::return_shared(account_obj);
 
@@ -87,15 +97,25 @@ module sui_squard::account_tests {
 
         let account_id = account::create_new_account(&admin_obj, string::utf8(b"test_tg"), ts.ctx());
 
-        ts.next_tx(ADMIN);
+        ts.next_tx(USER);
         
         let mut account_obj = ts.take_shared_by_id<Account>(account_id);
 
+        let coin = test_coin(&mut ts, 1000);
+
+        let account_balance_type = AccountBalance<SUI> { };
+
+        let account = account_obj.borrow_mut();
+
+        df::add(account, account_balance_type, coin);
+
+        ts.next_tx(ADMIN);
+
         account_obj.withdraw<SUI>(&admin_obj ,500, USER, ts.ctx());
 
-        let account_balance = account_obj.get_balance<SUI>();
+        let balance: &Coin<SUI> = df::borrow(account, account_balance_type);
 
-        assert!(account_balance == 500, EVALUES_DOES_NOT_MATCH);
+        assert!(balance.value() == 500, EVALUES_DOES_NOT_MATCH);
 
         ts::return_shared(account_obj);
 

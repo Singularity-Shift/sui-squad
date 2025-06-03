@@ -5,13 +5,19 @@ use axum::{
     routing::{get, post},
 };
 use squard_connect::{client::squard_connect::SquardConnect, service::dtos::Network};
+use std::env;
 use sui_sdk::SuiClientBuilder;
 use utoipa::OpenApi;
 use utoipa_redoc::{Redoc, Servable};
-use std::env;
 
 use crate::{
-    admin::handler::get_account, db, docs::{dto::ApiDoc, handler::api_docs}, info::handler::info, keep::handler::{auth, keep}, state::KeeperState, user::handler::create_user, webhook::handler::webhook
+    admin::handler::get_account,
+    docs::{dto::ApiDoc, handler::api_docs},
+    fund::handler::fund,
+    info::handler::info,
+    state::KeeperState,
+    user::handler::create_user,
+    webhook::handler::webhook,
 };
 
 pub async fn router() -> Router {
@@ -32,24 +38,24 @@ pub async fn router() -> Router {
         Network::Mainnet => SuiClientBuilder::default().build_mainnet().await,
         Network::Testnet => SuiClientBuilder::default().build_testnet().await,
         _ => SuiClientBuilder::default().build_devnet().await,
-    }.expect("Failed to build client");
+    }
+    .expect("Failed to build client");
 
     let squard_connect_client = SquardConnect::new(node, client_id, network, api_key);
 
     let doc = ApiDoc::openapi();
 
-    let db = db::init_tree();
-
     let (admin, path) = get_account();
 
-    let state = Arc::new(KeeperState::from((db, squard_connect_client, admin, path)));
+    let state = Arc::new(KeeperState::from((squard_connect_client, admin, path)));
 
     Router::new()
         .merge(Redoc::with_url("/redoc", doc))
         .route("/", get(info))
         .route("/docs", get(api_docs))
         .route("/webhook/{token}", get(webhook))
-        .route("/keep", post(keep))
-        .route("/auth", post(auth)).with_state(state.clone())
-        .route("/user", post(create_user)).with_state(state)
+        .route("/fund", post(fund))
+        .with_state(state.clone())
+        .route("/user", post(create_user))
+        .with_state(state)
 }

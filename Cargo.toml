@@ -4,7 +4,7 @@ package.version = "0.1.0"
 members = [
     "sui-squad-bot",
     "sui-squad-core",
-    "keeper"
+    "sui-squard-server"
 ]
 
 [workspace.dependencies]

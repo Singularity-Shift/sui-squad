@@ -1,5 +1,5 @@
 [package]
-name = "keeper"
+name = "sui-squard-server"
 edition = "2024"
 version.workspace = true
 

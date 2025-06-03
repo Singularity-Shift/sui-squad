@@ -3918,28 +3918,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "keeper"
-version = "0.1.0"
-dependencies = [
- "axum 0.8.4",
- "dotenvy",
- "serde",
- "serde_json",
- "shared-crypto",
- "sled",
- "squad_connect",
- "sui-keys",
- "sui-sdk",
- "sui-squad-core",
- "tokio",
- "tower 0.5.2",
- "tower-http 0.6.4",
- "tracing-subscriber",
- "utoipa",
- "utoipa-redoc",
-]
-
-[[package]]
 name = "lalrpop"
 version = "0.19.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7834,6 +7812,28 @@ dependencies = [
  "tokio",
  "tracing",
  "utoipa",
+]
+
+[[package]]
+name = "sui-squard-server"
+version = "0.1.0"
+dependencies = [
+ "axum 0.8.4",
+ "dotenvy",
+ "serde",
+ "serde_json",
+ "shared-crypto",
+ "sled",
+ "squad_connect",
+ "sui-keys",
+ "sui-sdk",
+ "sui-squad-core",
+ "tokio",
+ "tower 0.5.2",
+ "tower-http 0.6.4",
+ "tracing-subscriber",
+ "utoipa",
+ "utoipa-redoc",
 ]
 
 [[package]]
