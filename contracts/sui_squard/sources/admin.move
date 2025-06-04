@@ -1,9 +1,6 @@
 module sui_squard::admin {
-  use std::string::String;
   use sui::package;
-  use sui::{dynamic_object_field as dof, event};
-
-  const ETELEGRAM_DOES_NOT_EXIST: u64 = 2;
+  use sui::event;
 
   public struct AdminCap has key {
     id: UID,

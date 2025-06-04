@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use teloxide::types::UserId;
 use utoipa::ToSchema;
 
 #[derive(Deserialize, Serialize, ToSchema)]
@@ -12,39 +13,24 @@ pub struct JwtPayload {
     pub randomness: String,
 }
 
-#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+#[derive(Debug, Clone)]
 pub struct User {
+    pub id: UserId,
+    pub storage: Storage,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Storage {
     pub jwt: String,
-    pub bot_id: String,
-    pub network: String,
-    pub public_key: String,
-    pub max_epoch: u64,
-    pub randomness: String,
 }
 
 #[derive(Deserialize, Serialize, Debug, ToSchema)]
-pub struct AuthRequest {
+pub struct FundRequest {
     pub bot_id: String,
     pub user_id: String,
 }
 
-#[derive(Debug, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct UserPayload {
     pub telegram_id: String,
-    pub group_telegram_id: String,
-    pub wallet: String,
-}
-
-impl From<JwtPayload> for User  {
-    fn from(jwt_payload: JwtPayload) -> Self {
-
-        Self { 
-            jwt: jwt_payload.token, 
-            bot_id: jwt_payload.bot_id, 
-            network: jwt_payload.network,
-            public_key: jwt_payload.public_key,
-            max_epoch: jwt_payload.max_epoch,
-            randomness: jwt_payload.randomness
-        }
-    }
 }

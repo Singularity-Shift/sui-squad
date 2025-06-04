@@ -2,18 +2,19 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct State {
-    pub user_id: String,
-    pub bot_id: String,
-    pub network: String,
-    pub public_key: String,
+    pub telegram_id: String,
     pub max_epoch: u64,
-    pub randomness: String,
+    pub public_key: String,
 }
 
-impl From<(String, String, String, String, u64, String)> for State {
-    fn from(state: (String, String, String, String, u64, String)) -> Self {
-        let (user_id, bot_id, network, public_key, max_epoch, randomness) = state;
+impl From<(String, u64, String)> for State {
+    fn from(state: (String, u64, String)) -> Self {
+        let (telegram_id, max_epoch, public_key) = state;
 
-        Self { user_id, bot_id, network, public_key, max_epoch, randomness }
+        Self {
+            telegram_id,
+            max_epoch,
+            public_key,
+        }
     }
 }

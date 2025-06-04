@@ -1,34 +1,82 @@
-use std::{env, sync::Arc};
+use std::{env, str::FromStr, sync::Arc};
 
-use axum::{extract::State, Json};
+use axum::{
+    Json,
+    extract::{Request, State},
+};
 use shared_crypto::intent::Intent;
 use sui_keys::keystore::{AccountKeystore, FileBasedKeystore};
-use sui_sdk::{json::SuiJsonValue, rpc_types::{EventFilter, 
-    SuiTransactionBlockResponseOptions}, types::{base_types::ObjectID, quorum_driver_types::ExecuteTransactionRequestType, transaction::{Argument, Transaction}}};
+use sui_sdk::{
+    json::SuiJsonValue,
+    rpc_types::{EventFilter, SuiTransactionBlockResponseOptions},
+    types::{
+        base_types::ObjectID, quorum_driver_types::ExecuteTransactionRequestType,
+        transaction::Transaction,
+    },
+};
 use sui_squad_core::{helpers::dtos::UserPayload, package::dto::Event};
 
-use crate::state::KeeperState;
+use crate::{error::ErrorKeeper, state::KeeperState};
 
 #[axum::debug_handler]
-pub async fn create_user(State(keeper_state): State<Arc<KeeperState>>, user: Json<UserPayload>) {
+pub async fn create_user_if_not_exists(
+    State(keeper_state): State<Arc<KeeperState>>,
+    req: Request,
+) -> Result<(), ErrorKeeper> {
+    let user = req
+        .extensions()
+        .get::<UserPayload>()
+        .ok_or_else(|| ErrorKeeper {
+            message: "User not found".to_string(),
+            status: 404,
+        })?;
+
     let package_id = env::var("SUI_SQUARD_PACKAGE_ID").expect("SUI_SQUARD_PACKAGE_ID is not set");
+
+    let package_object_id = ObjectID::from_hex_literal(&package_id).map_err(|e| ErrorKeeper {
+        message: e.to_string(),
+        status: 500,
+    })?;
 
     let node = keeper_state.squard_connect_client().get_node();
 
     let admin = keeper_state.admin();
+    let path = keeper_state.path();
 
+    let keystore = FileBasedKeystore::new(&path).map_err(|e| ErrorKeeper {
+        message: e.to_string(),
+        status: 500,
+    })?;
 
-    let events = node.event_api()
+    let account_events = node
+        .event_api()
+        .query_events(
+            EventFilter::MoveEventType(Event::AccountEvent.to_string().parse().unwrap()),
+            None,
+            None,
+            false,
+        )
+        .await
+        .map_err(|e| ErrorKeeper {
+            message: e.to_string(),
+            status: 500,
+        })?;
+
+    let admin_events = node
+        .event_api()
         .query_events(
             EventFilter::MoveEventType(Event::AdminEvent.to_string().parse().unwrap()),
             None,
             None,
-            false
+            false,
         )
         .await
-        .unwrap();
+        .map_err(|e| ErrorKeeper {
+            message: e.to_string(),
+            status: 500,
+        })?;
 
-    let admin_event = events.data.iter().find(|event| {
+    let admin_event = admin_events.data.iter().find(|event| {
         if let Some(wallet) = event.parsed_json.get("wallet") {
             if let Some(wallet_str) = wallet.as_str() {
                 return wallet_str == admin.to_string();
@@ -37,57 +85,83 @@ pub async fn create_user(State(keeper_state): State<Arc<KeeperState>>, user: Jso
         false
     });
 
-    // let admin_id = admin_event.unwrap().parsed_json.get("admin_id").unwrap().as_str().unwrap();
+    let admin_id = admin_event
+        .unwrap()
+        .parsed_json
+        .get("admin_id")
+        .ok_or_else(|| ErrorKeeper {
+            message: "Admin not found".to_string(),
+            status: 404,
+        })?
+        .as_str()
+        .ok_or_else(|| ErrorKeeper {
+            message: "Admin id is not a string".to_string(),
+            status: 404,
+        })?;
 
-    // let package_object = ObjectID::from_hex_literal(&package_id).unwrap();
+    let admin_object_id = ObjectID::from_hex_literal(admin_id).map_err(|e| ErrorKeeper {
+        message: e.to_string(),
+        status: 500,
+    })?;
 
-    // let admin_object_id = ObjectID::from_hex_literal(admin_id).unwrap();
+    let account_event = account_events.data.iter().find(|event| {
+        if let Some(telegram_id) = event.parsed_json.get("telegram_id") {
+            if let Some(telegram_id_str) = telegram_id.as_str() {
+                return telegram_id_str == user.telegram_id;
+            }
+        }
+        false
+    });
 
-    // let relations_id = ObjectID::from_bytes(&[]).unwrap();
+    if let None = account_event {
+        let gas_budget = 10_000_000;
 
-    // let user_address = ObjectID::from_address(user.wallet.parse().unwrap());
+        let tx = node
+            .transaction_builder()
+            .move_call(
+                admin.clone(),
+                package_object_id,
+                "account",
+                "create_new_account",
+                vec![],
+                vec![
+                    SuiJsonValue::from_object_id(admin_object_id),
+                    SuiJsonValue::new(serde_json::Value::String(user.telegram_id.clone()))
+                        .map_err(|e| ErrorKeeper {
+                            message: e.to_string(),
+                            status: 500,
+                        })?,
+                ],
+                None,
+                gas_budget,
+                None,
+            )
+            .await
+            .map_err(|e| ErrorKeeper {
+                message: e.to_string(),
+                status: 500,
+            })?;
 
-    // println!("package_object: {:?}", package_object);
+        let signature = keystore
+            .sign_secure(&admin, &tx, Intent::sui_transaction())
+            .map_err(|e| ErrorKeeper {
+                message: e.to_string(),
+                status: 500,
+            })?;
 
-    // println!("admin_object_id: {:?}", admin_object_id);
+        print!("Executing the transaction...");
+        let transaction_response = node
+            .quorum_driver_api()
+            .execute_transaction_block(
+                Transaction::from_data(tx.clone(), vec![signature]),
+                SuiTransactionBlockResponseOptions::full_content(),
+                Some(ExecuteTransactionRequestType::WaitForLocalExecution),
+            )
+            .await
+            .unwrap();
 
-    // println!("user_address: {:?}", user_address);
-
-    // let tx = node.transaction_builder().move_call(
-    //     *admin,
-    //     package_object,
-    //     "admin",
-    //     "set_relations",
-    //     vec![],
-    //     vec![
-    //         SuiJsonValue::from_object_id(admin_object_id),       // Admin object
-    //         SuiJsonValue::from_object_id(relations_id),               // relations_id_opt: Option<ID> (None as empty vector)
-    //         SuiJsonValue::from_bcs_bytes(None, user.telegram_id.as_bytes()).unwrap(), // telegram_id: String
-    //         SuiJsonValue::from_object_id(user_address), // user: address
-    //     ],
-    //     None,
-    //     1000000,
-    //     None
-    // ).await;
-
-    // if let Ok(tx) = tx {
-    //     let keystore = FileBasedKeystore::new(keeper_state.path()).expect("Failed to create keystore");
-    //     let signature = keystore.sign_secure(admin, &tx, Intent::sui_transaction()).unwrap();
-
-    //     print!("Executing the transaction...");
-    //     let transaction_response = node.quorum_driver_api()
-    //     .execute_transaction_block(
-    //         Transaction::from_data(tx.clone(), vec![signature]),
-    //         SuiTransactionBlockResponseOptions::full_content(),
-    //         Some(ExecuteTransactionRequestType::WaitForLocalExecution),
-    //     )
-    //     .await.unwrap();
-
-    //     println!("{}", transaction_response);
-    //     println!("Transaction created successfully: {:?}", tx);
-    // } else {
-    //     println!("Error creating transaction: {:?}", tx.err());
-    // }
-
-    
+        println!("{}", transaction_response);
+        println!("Transaction created successfully: {:?}", tx);
+    }
+    Ok(())
 }

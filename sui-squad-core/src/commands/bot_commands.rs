@@ -1,5 +1,9 @@
+use std::collections::HashMap;
+
 use fastcrypto_zkp::bn254::zk_login::ZkLoginInputs;
-use teloxide::macros::BotCommands;
+use teloxide::{macros::BotCommands, types::UserId};
+
+use crate::helpers::dtos::Storage;
 
 #[derive(BotCommands, Clone, Debug)]
 #[command(
@@ -15,11 +19,13 @@ pub enum Command {
     PromptExamples,
     #[command(description = "Display this help message.")]
     Help,
+    #[command(description = "Fund your account.")]
+    Fund,
 }
 
 #[derive(Debug, Clone, Default)]
 pub enum LoginState {
     #[default]
     Login,
-    Authenticated(ZkLoginInputs),
+    LocalStorate(HashMap<UserId, String>),
 }

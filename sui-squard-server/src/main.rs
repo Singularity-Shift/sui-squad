@@ -3,6 +3,7 @@ mod docs;
 mod error;
 mod fund;
 mod info;
+mod middlewares;
 mod router;
 mod state;
 mod user;
