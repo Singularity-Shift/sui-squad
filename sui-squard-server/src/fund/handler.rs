@@ -81,15 +81,15 @@ pub async fn fund(
         .ok_or_else(|| ErrorKeeper {
             message: "Account id not found".to_string(),
             status: 404,
+        })?
+        .as_str()
+        .ok_or_else(|| ErrorKeeper {
+            message: "Admin id is not a string".to_string(),
+            status: 404,
         })?;
 
     let node = keeper_state.squard_connect_client().get_node();
     let path = keeper_state.path();
-
-    let keystore = FileBasedKeystore::new(&path).map_err(|e| ErrorKeeper {
-        message: e.to_string(),
-        status: 500,
-    })?;
 
     let jwt = headers.get("Authorization").ok_or_else(|| ErrorKeeper {
         message: "Authorization header not found".to_string(),
@@ -113,6 +113,12 @@ pub async fn fund(
 
     squard_connect_client.set_jwt(jwt.to_string());
 
+    squard_connect_client.set_zk_proof_params(
+        fund_request.randomness,
+        fund_request.public_key.clone(),
+        fund_request.max_epoch,
+    );
+
     let account = squard_connect_client
         .get_address()
         .await
@@ -129,20 +135,6 @@ pub async fn fund(
             status: 500,
         })?;
 
-    let public_key = PublicKey::from_str(&fund_request.public_key).map_err(|e| ErrorKeeper {
-        message: e.to_string(),
-        status: 500,
-    })?;
-
-    let signer = keystore
-        .get_key(&SuiAddress::from(&public_key))
-        .map_err(|e| ErrorKeeper {
-            message: e.to_string(),
-            status: 500,
-        })?;
-
-    let signer_address = SuiAddress::from(&signer.public());
-
     let sender = SuiAddress::from_str(&account.address).map_err(|e| ErrorKeeper {
         message: e.to_string(),
         status: 500,
@@ -153,11 +145,10 @@ pub async fn fund(
         status: 500,
     })?;
 
-    let account_id_object_id =
-        ObjectID::from_hex_literal(&account_id.to_string()).map_err(|e| ErrorKeeper {
-            message: e.to_string(),
-            status: 500,
-        })?;
+    let account_id_object_id = ObjectID::from_hex_literal(account_id).map_err(|e| ErrorKeeper {
+        message: e.to_string(),
+        status: 500,
+    })?;
 
     let coin_name = "0x2::sui::SUI".to_string();
 
@@ -209,10 +200,17 @@ pub async fn fund(
             status: 500,
         })?;
 
+    let signer_pk = PublicKey::from_str(&fund_request.public_key).map_err(|e| ErrorKeeper {
+        message: e.to_string(),
+        status: 500,
+    })?;
+
+    let signer_address = SuiAddress::from(&signer_pk);
+
     let transaction = squard_connect_client
         .sign_transaction(
             tx,
-            account.clone(),
+            signer_address,
             zk_login_inputs,
             fund_request.max_epoch,
             path.clone(),
@@ -228,7 +226,7 @@ pub async fn fund(
     let digest_str = squard_connect_client
         .sponsor_transaction(
             transaction,
-            account,
+            sender,
             vec![account_address.to_string()],
             vec![format!("{}::account::fund", package_id)],
         )

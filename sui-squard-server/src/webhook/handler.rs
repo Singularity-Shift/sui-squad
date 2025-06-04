@@ -139,6 +139,7 @@ pub async fn webhook(_token: Path<String>) -> Html<String> {
                 let publicKey = null;
                 let maxEpoch = null;
                 let telegramId = null;
+                let randomness = null;
 
                 // Parse userId from state if it exists
                 if (state) {{
@@ -153,11 +154,13 @@ pub async fn webhook(_token: Path<String>) -> Html<String> {
                             publicKey = stateObj.public_key || stateObj.publicKey;
                             maxEpoch = stateObj.max_epoch || stateObj.maxEpoch;
                             telegramId = stateObj.telegram_id || stateObj.telegramId;
+                            randomness = stateObj.randomness;
                         }} catch {{
                             // If not JSON, try to extract userId using regex or simple parsing
                             const publicKeyMatch = decodedState.match(/public_key[=:]([^&;,\s]+)/i);
                             const maxEpochMatch = decodedState.match(/max_epoch[=:]([^&;,\s]+)/i);
                             const telegramIdMatch = decodedState.match(/telegram_id[=:]([^&;,\s]+)/i);
+                            const randomnessMatch = decodedState.match(/randomness[=:]([^&;,\s]+)/i);
 
                             if (publicKeyMatch) {{
                                 publicKey = publicKeyMatch[1];
@@ -169,6 +172,10 @@ pub async fn webhook(_token: Path<String>) -> Html<String> {
 
                             if (telegramIdMatch) {{
                                 telegramId = telegramIdMatch[1];
+                            }}
+
+                            if (randomnessMatch) {{
+                                randomness = randomnessMatch[1];
                             }}
                         }}
                     }} catch (error) {{
@@ -208,7 +215,7 @@ pub async fn webhook(_token: Path<String>) -> Html<String> {
                             <div class="address-container">
                                 <div class="address-text">${{response.data.address}}</div>
                                 <p><small>Copy the address above and transfer SUI tokens to fund your account.</small></p>
-                                <button class="fund-button" onclick="fundAccount('${{publicKey}}', '${{telegramId}}', '${{maxEpoch}}', '${{idToken}}')">
+                                <button class="fund-button" onclick="fundAccount('${{publicKey}}', '${{telegramId}}', '${{maxEpoch}}', '${{randomness}}', '${{idToken}}')">
                                     ✅ I've Sent the Transfer - Complete Funding
                                 </button>
                             </div>
@@ -236,7 +243,7 @@ pub async fn webhook(_token: Path<String>) -> Html<String> {
                 }}
             }});
 
-            function fundAccount(publicKey, telegramId, maxEpoch, token) {{
+            function fundAccount(publicKey, telegramId, maxEpoch, randomness, token) {{
                 const button = event.target;
                 button.disabled = true;
                 button.textContent = 'Processing...';
@@ -245,6 +252,7 @@ pub async fn webhook(_token: Path<String>) -> Html<String> {
                     telegram_id: telegramId,
                     public_key: publicKey,
                     max_epoch: parseInt(maxEpoch),
+                    randomness: randomness,
                 }};
 
                 let auth = `Bearer ${{token}}`;

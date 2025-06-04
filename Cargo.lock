@@ -7148,9 +7148,9 @@ dependencies = [
 ]
 
 [[package]]
-name = "squad_connect"
-version = "0.1.9"
-source = "git+https://github.com/Singularity-Shift/squad_connect?tag=0.1.9#d1c29a905c37e7338c3f7aa366bc182e1adca9ed"
+name = "squard_connect"
+version = "0.1.13"
+source = "git+https://github.com/Singularity-Shift/squad_connect?tag=0.1.13#80d03b4c50821f7147e8ff2aed6ffb81f86b0eb6"
 dependencies = [
  "async-trait",
  "base64 0.22.1",
@@ -7721,7 +7721,7 @@ dependencies = [
  "reqwest 0.12.18",
  "serde",
  "serde_json",
- "squad_connect",
+ "squard_connect",
  "sui-sdk",
  "sui-squad-core",
  "teloxide",
@@ -7749,7 +7749,7 @@ dependencies = [
  "reqwest 0.12.18",
  "serde",
  "serde_json",
- "squad_connect",
+ "squard_connect",
  "teloxide",
  "thiserror 1.0.69",
  "tokio",
@@ -7767,7 +7767,7 @@ dependencies = [
  "serde_json",
  "shared-crypto",
  "sled",
- "squad_connect",
+ "squard_connect",
  "sui-keys",
  "sui-sdk",
  "sui-squad-core",

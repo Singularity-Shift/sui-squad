@@ -39,11 +39,9 @@ pub async fn handle_fund(
 
         squard_connect_client.create_zkp_payload(path).await?;
 
-        let max_epoch = squard_connect_client.get_max_epoch();
+        let (randomness, public_key, max_epoch) = squard_connect_client.get_zk_proof_params();
 
-        let public_key = squard_connect_client.get_public_key();
-
-        let state = State::from((user_id.to_string(), max_epoch, public_key));
+        let state = State::from((user_id.to_string(), max_epoch, public_key, randomness));
 
         let host = env::var("HOST").expect("HOST env variable is not set");
         let redirect_url = format!("https://{host}/webhook/token");
