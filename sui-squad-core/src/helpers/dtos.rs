@@ -1,6 +1,8 @@
 use serde::{Deserialize, Serialize};
-use teloxide::types::UserId;
 use utoipa::ToSchema;
+
+// Use our own UserId type instead of teloxide's
+pub type UserId = i64;
 
 #[derive(Deserialize, Serialize, ToSchema)]
 pub struct JwtPayload {

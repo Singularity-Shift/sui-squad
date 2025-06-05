@@ -1,24 +1,42 @@
 use std::collections::HashMap;
 
-use teloxide::{macros::BotCommands, types::UserId};
-
-#[derive(BotCommands, Clone, Debug)]
-#[command(
-    rename_rule = "lowercase",
-    description = "These commands are supported:"
-)]
+#[derive(Clone, Debug)]
 pub enum Command {
-    #[command(description = "Send a prompt to the AI assistant.")]
     Prompt(String),
-    #[command(description = "Send a prompt to the AI assistant (short alias for /prompt).")]
     P(String),
-    #[command(description = "Show Squard prompt examples.")]
     PromptExamples,
-    #[command(description = "Display this help message.")]
     Help,
-    #[command(description = "Fund your account.")]
     Fund,
 }
+
+impl Command {
+    pub fn parse(text: &str) -> Option<Self> {
+        let parts: Vec<&str> = text.splitn(2, ' ').collect();
+        let command = parts[0];
+        let args = parts.get(1).unwrap_or(&"").to_string();
+        
+        match command {
+            "/prompt" => Some(Command::Prompt(args)),
+            "/p" => Some(Command::P(args)),
+            "/promptexamples" => Some(Command::PromptExamples),
+            "/help" => Some(Command::Help),
+            "/fund" => Some(Command::Fund),
+            _ => None,
+        }
+    }
+    
+    pub fn description(&self) -> &'static str {
+        match self {
+            Command::Prompt(_) => "Send a prompt to the AI assistant.",
+            Command::P(_) => "Send a prompt to the AI assistant (short alias for /prompt).",
+            Command::PromptExamples => "Show Squard prompt examples.",
+            Command::Help => "Display this help message.",
+            Command::Fund => "Fund your account.",
+        }
+    }
+}
+
+pub type UserId = i64; // Telegram user ID
 
 #[derive(Debug, Clone, Default)]
 pub enum LoginState {

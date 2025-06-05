@@ -1,76 +1,65 @@
 use std::collections::HashMap;
 use sui_squad_core::helpers::jwt::JwtManager;
-use sui_squad_core::{commands::bot_commands::LoginState, helpers::dtos::Storage};
-use teloxide::{dispatching::dialogue::InMemStorage, prelude::*, types::Message};
+use sui_squad_core::{commands::bot_commands::{LoginState, UserId}, helpers::dtos::Storage};
+use grammers_client::types::Message;
+use anyhow::Result;
+use crate::bot_manage::handler_tree::BotContext;
 
-pub async fn auth(msg: Message, dialogue: Dialogue<LoginState, InMemStorage<LoginState>>) -> bool {
-    let login_state = dialogue.get().await;
+pub async fn auth(ctx: &BotContext, message: &Message) -> Result<bool> {
+    let user_id = message.sender().unwrap().id();
+    let login_state = ctx.get_dialogue_state(user_id).await?;
     let jwt_manager = JwtManager::new();
 
-    if let Ok(ref login_state_option) = login_state {
-        if let Some(login_state) = login_state_option {
-            let user_opt = msg.from();
+    match login_state {
+        LoginState::LocalStorate(users) => {
+            if let Some(storage_str) = users.get(&user_id) {
+                let storage_result: Result<Storage, serde_json::Error> =
+                    serde_json::from_str::<Storage>(storage_str);
 
-            if let Some(user) = user_opt {
-                if let LoginState::LocalStorate(users) = login_state {
-                    if let Some(storage_str) = users.get(&user.id) {
-                        let storage_result: Result<_, serde_json::Error> =
-                            serde_json::from_str::<Storage>(storage_str);
-
-                        if let Ok(storage) = storage_result {
-                            // Initialize JWT manager and validate/update storage
-
-                            match jwt_manager.validate_and_update_storage(storage, user.id) {
-                                Ok(_updated_storage) => {
-                                    println!(
-                                        "✅ JWT token validated/generated for user {}",
-                                        user.id
-                                    );
-                                    // Note: The updated storage with the new JWT would need to be
-                                    // persisted back to the dialogue storage in the calling code
-                                    return true;
-                                }
-                                Err(e) => {
-                                    println!("❌ Failed to validate/generate JWT: {}", e);
-                                }
-                            }
-
-                            return generate_new_storage(
-                                user.id,
-                                jwt_manager,
-                                users.clone(),
-                                dialogue,
-                            )
-                            .await;
+                if let Ok(storage) = storage_result {
+                    // Initialize JWT manager and validate/update storage
+                    match jwt_manager.validate_and_update_storage(storage, user_id) {
+                        Ok(_updated_storage) => {
+                            println!(
+                                "✅ JWT token validated/generated for user {}",
+                                user_id
+                            );
+                            // Note: The updated storage with the new JWT would need to be
+                            // persisted back to the dialogue storage in the calling code
+                            return Ok(true);
                         }
-                    } else {
-                        return generate_new_storage(user.id, jwt_manager, users.clone(), dialogue)
-                            .await;
+                        Err(e) => {
+                            println!("❌ Failed to validate/generate JWT: {}", e);
+                        }
                     }
-                } else {
-                    let users = HashMap::new();
-                    return generate_new_storage(user.id, jwt_manager, users, dialogue).await;
+
+                    return generate_new_storage(
+                        user_id,
+                        jwt_manager,
+                        users.clone(),
+                        ctx,
+                    )
+                    .await;
                 }
+            } else {
+                return generate_new_storage(user_id, jwt_manager, users.clone(), ctx).await;
             }
         }
-    } else {
-        println!(
-            "Error getting dialogue state: {:?}",
-            login_state.as_ref().err()
-        );
-
-        return false;
+        LoginState::Login => {
+            let users = HashMap::new();
+            return generate_new_storage(user_id, jwt_manager, users, ctx).await;
+        }
     }
 
-    false
+    Ok(false)
 }
 
 async fn generate_new_storage(
     user_id: UserId,
     jwt_manager: JwtManager,
     mut users: HashMap<UserId, String>,
-    dialogue: Dialogue<LoginState, InMemStorage<LoginState>>,
-) -> bool {
+    ctx: &BotContext,
+) -> Result<bool> {
     match jwt_manager.generate_token(user_id) {
         Ok(token) => {
             let storage = Storage { jwt: token };
@@ -81,17 +70,17 @@ async fn generate_new_storage(
 
             let new_login_state = LoginState::LocalStorate(users);
 
-            if let Err(e) = dialogue.update(new_login_state.clone()).await {
+            if let Err(e) = ctx.set_dialogue_state(user_id, new_login_state).await {
                 println!("❌ Failed to update dialogue state: {}", e);
-                return false;
+                return Ok(false);
             }
 
             println!("✅ Generated new JWT token for user {}", user_id);
-            return true;
+            return Ok(true);
         }
         Err(e) => {
             println!("❌ Failed to generate JWT token: {}", e);
-            return false;
+            return Ok(false);
         }
     }
 }

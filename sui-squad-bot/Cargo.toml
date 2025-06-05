@@ -5,7 +5,8 @@ edition = "2024"  # Changed from 2024 to 2021 for better compatibility
 
 [dependencies]
 sui-squad-core.workspace = true
-teloxide.workspace = true
+grammers-client.workspace = true
+grammers-session.workspace = true
 tokio.workspace = true
 tracing.workspace = true
 anyhow.workspace = true

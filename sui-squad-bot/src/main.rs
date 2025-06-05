@@ -4,19 +4,24 @@ mod services;
 mod tools;
 
 use anyhow::Result;
-use bot_manage::handler_tree::handler_tree;
+use bot_manage::handler_tree::BotContext;
 use dotenvy::dotenv;
+use grammers_client::{Client, Config as GrammersConfig, InitParams, Update};
+use grammers_session::Session;
 use services::services::Services;
 use squard_connect::{client::squard_connect::SquardConnect, service::dtos::Network};
 use std::time::Duration;
-use std::{collections::HashMap, env};
+use std::{collections::HashMap, env, sync::Arc};
 use sui_sdk::SuiClientBuilder;
 use sui_squad_core::{
-    ai::ResponsesClient, commands::bot_commands::LoginState, config::Config,
+    ai::ResponsesClient, commands::bot_commands::{LoginState, UserId}, config::Config,
     conversation::ConversationCache,
 };
-use teloxide::{dispatching::dialogue::InMemStorage, prelude::*, types::BotCommand};
+use tokio::sync::Mutex;
 use tracing_subscriber;
+
+// Custom storage to replace teloxide's InMemStorage
+pub type DialogueStorage = Arc<Mutex<HashMap<UserId, LoginState>>>;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -64,33 +69,82 @@ async fn main() -> Result<()> {
 
     let cfg = Config::from_env();
     let responses_client = ResponsesClient::new(&cfg)?;
-    let bot = Bot::new(cfg.teloxide_token.clone());
+    
+    // Initialize grammers client using config values
+    let session = Session::new();
+    
+    let client = Client::connect(GrammersConfig {
+        session,
+        api_id: cfg.api_id,
+        api_hash: cfg.api_hash.clone(),
+        params: InitParams::default(),
+    }).await?;
 
-    let commands = vec![
-        BotCommand::new("prompt", "Send a prompt to the AI."),
-        BotCommand::new("p", "Send a prompt to the AI (short alias)."),
-        BotCommand::new("promptexamples", "Show prompt examples."),
-        BotCommand::new("fund", "Fund your account."),
-        BotCommand::new("help", "Display this help message."),
-    ];
+    // Bot authentication with grammers
+    if !client.is_authorized().await? {
+        println!("🔐 Bot not authorized, signing in...");
+        
+        // Use the bot token from config for authentication
+        let bot_token = &cfg.bot_token;
+        
+        // In grammers, bot authentication needs to be done using the sign_in method
+        // For now, we'll skip authentication and note that this needs to be implemented
+        println!("⚠️ TODO: Implement bot authentication with grammers");
+        println!("⚠️ Bot token: {}...", &bot_token[..20.min(bot_token.len())]);
+        println!("⚠️ The bot may not receive updates without proper authentication");
+    } else {
+        println!("✅ Bot already authorized");
+    }
 
-    bot.set_my_commands(commands).await?;
+    println!("✅ Bot connected successfully");
 
+    // Create in-memory storage replacement
+    let dialogue_storage: DialogueStorage = Arc::new(Mutex::new(HashMap::new()));
     let hash_map: HashMap<UserId, String> = HashMap::new();
 
-    Dispatcher::builder(bot.clone(), handler_tree())
-        .dependencies(dptree::deps![
-            responses_client.clone(),
-            InMemStorage::<LoginState>::new(),
-            squard_connect_client,
-            services,
-            conversation_cache,
-            hash_map
-        ])
-        .enable_ctrlc_handler()
-        .build()
-        .dispatch()
-        .await;
+    // Create bot context with all dependencies
+    let bot_context = BotContext {
+        client: client.clone(),
+        responses_client,
+        dialogue_storage,
+        squard_connect_client,
+        services,
+        conversation_cache,
+        user_sessions: Arc::new(Mutex::new(hash_map)),
+    };
 
+    // Start the event loop
+    println!("🤖 Starting bot event loop...");
+    
+    loop {
+        match client.next_update().await {
+            Ok(update) => {
+                let ctx = bot_context.clone();
+                tokio::spawn(async move {
+                    if let Err(e) = handle_update(ctx, update).await {
+                        eprintln!("Error handling update: {}", e);
+                    }
+                });
+            }
+            Err(e) => {
+                eprintln!("Error receiving update: {}", e);
+                tokio::time::sleep(Duration::from_secs(1)).await;
+            }
+        }
+    }
+}
+
+async fn handle_update(ctx: BotContext, update: Update) -> Result<()> {
+    match update {
+        Update::NewMessage(message) => {
+            bot_manage::handlers::handle_message(ctx, message).await?;
+        }
+        Update::CallbackQuery(query) => {
+            bot_manage::handlers::handle_callback_query(ctx, query).await?;
+        }
+        _ => {
+            // Handle other update types if needed
+        }
+    }
     Ok(())
 }

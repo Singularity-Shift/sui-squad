@@ -1,47 +1,72 @@
 use anyhow::Result;
-use squard_connect::client::squard_connect::SquardConnect;
-use sui_squad_core::{
-    ai::ResponsesClient, 
-    commands::bot_commands::{Command, LoginState},
-    conversation::ConversationCache
+use grammers_client::{types::Message, InputMessage};
+use sui_squad_core::commands::bot_commands::Command;
+
+use crate::bot_manage::{
+    handlers::{handle_fund, handle_prompt},
+    handler_tree::BotContext
 };
-use teloxide::{dispatching::dialogue::InMemStorage, prelude::*, types::Message, utils::command::BotCommands, Bot};
-
-use crate::bot_manage::handlers::handle_fund;
-
-use super::handlers::{handle_prompt};
 
 pub async fn answer(
-    bot: Bot,
-    msg: Message,
+    ctx: &BotContext,
+    msg: &Message,
     cmd: Command,
-    responses_client: ResponsesClient,
-    dialogue: Dialogue<LoginState, InMemStorage<LoginState>>,
-    squard_connect_client: SquardConnect,
-    conversation_cache: ConversationCache,
 ) -> Result<()> {
+    let chat = msg.chat();
+    
     match cmd {
-        Command::Help => bot.send_message(msg.chat.id, Command::descriptions().to_string()).await?,
-        Command::Fund => handle_fund(bot, msg, squard_connect_client).await?,
-        Command::Prompt(prompt_text) => handle_prompt(
-            bot, 
-            msg, 
-            prompt_text, 
-            responses_client, 
-            dialogue, 
-            squard_connect_client,
-            conversation_cache
-        ).await?,
-        Command::P(prompt_text) => handle_prompt(
-            bot, 
-            msg, 
-            prompt_text, 
-            responses_client, 
-            dialogue, 
-            squard_connect_client,
-            conversation_cache
-        ).await?,
-        Command::PromptExamples => bot.send_message(msg.chat.id, "Here are some example prompts you can use:\n\n💰 Wallet & Balance:\n- /prompt \"What's my wallet address?\" or /p \"What's my wallet address?\"\n- /prompt \"Show my balance\" or /p \"Show my balance\"\n- /prompt \"Check my SUI balance\" or /p \"Check my SUI balance\"\n- /prompt \"How much do I have?\" or /p \"How much do I have?\"\n\n💸 Transactions:\n- /prompt \"Send 10 SUI to @username\" or /p \"Send 10 SUI to @username\"\n- /prompt \"Withdraw 5 SUI\" or /p \"Withdraw 5 SUI\"\n- /prompt \"Send 100 SUI to everyone\" or /p \"Send 100 SUI to everyone\"\n\n❓ General:\n- /prompt \"What can you help me with?\" or /p \"What can you help me with?\"\n- /prompt \"Explain how this bot works\" or /p \"Explain how this bot works\"\n\n💡 Tip: Use /p as a shortcut for /prompt!").await?,
+        Command::Help => {
+            let help_text = get_help_text();
+            ctx.client
+                .send_message(chat, InputMessage::text(help_text))
+                .await?;
+        },
+        Command::Fund => {
+            handle_fund(ctx.clone(), msg.clone()).await?;
+        },
+        Command::Prompt(prompt_text) => {
+            handle_prompt(ctx.clone(), msg.clone(), prompt_text).await?;
+        },
+        Command::P(prompt_text) => {
+            handle_prompt(ctx.clone(), msg.clone(), prompt_text).await?; 
+        },
+        Command::PromptExamples => {
+            let examples_text = get_prompt_examples_text();
+            ctx.client
+                .send_message(chat, InputMessage::text(examples_text))
+                .await?;
+        },
     };
     Ok(())
+}
+
+pub fn get_help_text() -> &'static str {
+    "These commands are supported:
+
+/prompt <text> - Send a prompt to the AI assistant
+/p <text> - Send a prompt to the AI assistant (short alias for /prompt)  
+/promptexamples - Show Squard prompt examples
+/help - Display this help message
+/fund - Fund your account"
+}
+
+pub fn get_prompt_examples_text() -> &'static str {
+    "Here are some example prompts you can use:
+
+💰 Wallet & Balance:
+- /prompt \"What's my wallet address?\" or /p \"What's my wallet address?\"
+- /prompt \"Show my balance\" or /p \"Show my balance\"
+- /prompt \"Check my SUI balance\" or /p \"Check my SUI balance\"
+- /prompt \"How much do I have?\" or /p \"How much do I have?\"
+
+💸 Transactions:
+- /prompt \"Send 10 SUI to @username\" or /p \"Send 10 SUI to @username\"
+- /prompt \"Withdraw 5 SUI\" or /p \"Withdraw 5 SUI\"
+- /prompt \"Send 100 SUI to everyone\" or /p \"Send 100 SUI to everyone\"
+
+❓ General:
+- /prompt \"What can you help me with?\" or /p \"What can you help me with?\"
+- /prompt \"Explain how this bot works\" or /p \"Explain how this bot works\"
+
+💡 Tip: Use /p as a shortcut for /prompt!"
 }

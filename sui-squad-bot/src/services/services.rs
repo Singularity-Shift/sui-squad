@@ -1,6 +1,6 @@
 use anyhow::{Result, anyhow};
 use reqwest::Client;
-use sui_squad_core::helpers::dtos::{User, UserPayload};
+
 use tracing::{debug, error, info, warn};
 
 use super::dto::Endpoints;
@@ -15,6 +15,52 @@ impl Services {
         let client = Client::new();
 
         Self { client }
+    }
+
+    pub async fn auth(&self, token: String) -> Result<()> {
+        let url = Endpoints::Auth.to_string();
+        debug!("🔐 Making auth service request to: {}", url);
+        debug!(
+            "🔑 Using JWT token (first 20 chars): {}...",
+            if token.len() > 20 {
+                &token[..20]
+            } else {
+                &token
+            }
+        );
+
+        let response = self
+            .client
+            .post(&url)
+            .header("Authorization", format!("Bearer {}", token))
+            .send()
+            .await;
+
+        match response {
+            Ok(resp) => {
+                let status = resp.status();
+                debug!("📡 Auth response status: {}", status);
+
+                if resp.status().is_success() {
+                    info!("✅ Auth service call successful - Status: {}", status);
+                    Ok(())
+                } else {
+                    let error_body = resp
+                        .text()
+                        .await
+                        .unwrap_or_else(|_| "Unable to read error body".to_string());
+
+                    error!("❌ Auth failed with status: {}", status);
+                    error!("❌ Auth error response: {}", error_body);
+
+                    Err(anyhow!("Auth service failed with status {}", status))
+                }
+            }
+            Err(network_error) => {
+                error!("❌ Network error during auth service call: {:?}", network_error);
+                Err(anyhow!("Auth network error: {}", network_error))
+            }
+        }
     }
 
     pub async fn user(&self, token: String) -> Result<()> {

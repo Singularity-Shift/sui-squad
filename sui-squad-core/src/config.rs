@@ -3,17 +3,26 @@ use std::env;
 
 #[derive(Debug, Clone)]
 pub struct Config {
-    pub teloxide_token: String,
+    pub bot_token: String,
+    pub api_id: i32,
+    pub api_hash: String,
     pub openai_api_key: Option<String>,
 }
 
 impl Config {
     pub fn from_env() -> Self {
         dotenv().ok();
-        let teloxide_token = env::var("TELOXIDE_TOKEN").expect("TELOXIDE_TOKEN must be set");
+        let bot_token = env::var("BOT_TOKEN").expect("BOT_TOKEN must be set");
+        let api_id = env::var("API_ID")
+            .expect("API_ID must be set")
+            .parse::<i32>()
+            .expect("API_ID must be a valid integer");
+        let api_hash = env::var("API_HASH").expect("API_HASH must be set");
         let openai_api_key = env::var("OPENAI_API_KEY").ok();
         Config {
-            teloxide_token,
+            bot_token,
+            api_id,
+            api_hash,
             openai_api_key,
         }
     }

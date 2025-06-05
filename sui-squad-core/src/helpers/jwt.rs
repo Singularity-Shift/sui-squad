@@ -1,9 +1,8 @@
-use super::dtos::Storage;
+use super::dtos::{Storage, UserId};
 use chrono::{Duration, Utc};
 use jsonwebtoken::{DecodingKey, EncodingKey, Header, TokenData, Validation, decode, encode};
 use serde::{Deserialize, Serialize};
 use std::env;
-use teloxide::types::UserId;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Claims {
