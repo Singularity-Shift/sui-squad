@@ -19,9 +19,12 @@ use sui_squad_core::{
 };
 use tokio::sync::Mutex;
 use tracing_subscriber;
+use grammers_client::grammers_tl_types as tl;
 
 // Custom storage to replace teloxide's InMemStorage
 pub type DialogueStorage = Arc<Mutex<HashMap<UserId, LoginState>>>;
+
+
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -77,7 +80,17 @@ async fn main() -> Result<()> {
         session,
         api_id: cfg.api_id,
         api_hash: cfg.api_hash.clone(),
-        params: InitParams::default(),
+        params: InitParams {
+            server_addr: Some("149.154.167.92:443".parse()?), // DC 4 - US East Coast
+            device_model: "sui-squad-bot".to_string(),
+            system_version: "1.0".to_string(),
+            app_version: "1.0".to_string(),
+            lang_code: "en".to_string(),
+            system_lang_code: "en".to_string(),
+            catch_up: false,
+            flood_sleep_threshold: 60,
+            ..Default::default()
+        },
     }).await?;
 
     // Bot authentication with grammers
@@ -87,11 +100,26 @@ async fn main() -> Result<()> {
         // Use the bot token from config for authentication
         let bot_token = &cfg.bot_token;
         
-        // In grammers, bot authentication needs to be done using the sign_in method
-        // For now, we'll skip authentication and note that this needs to be implemented
-        println!("⚠️ TODO: Implement bot authentication with grammers");
-        println!("⚠️ Bot token: {}...", &bot_token[..20.min(bot_token.len())]);
-        println!("⚠️ The bot may not receive updates without proper authentication");
+        // Implement proper bot authentication with grammers using ImportBotAuthorization
+        use tl::functions;
+
+        let import_req = functions::auth::ImportBotAuthorization {
+            flags: 0,
+            api_id: cfg.api_id,
+            api_hash: cfg.api_hash.clone(),
+            bot_auth_token: bot_token.clone(),
+        };
+
+        // Try to authenticate - grammers client should handle DC migration automatically
+        let auth_result = client.invoke(&import_req).await;
+
+        match auth_result {
+            Ok(_) => println!("✅ Bot authentication successful"),
+            Err(e) => {
+                eprintln!("❌ Bot authentication failed: {}", e);
+                return Err(e.into());
+            }
+        }
     } else {
         println!("✅ Bot already authorized");
     }
