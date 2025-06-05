@@ -1,16 +1,16 @@
-mod docs;
-mod info;
-mod keep;
-mod router;
-mod webhook;
-mod state;
-mod db;
-mod error;
 mod admin;
+mod docs;
+mod error;
+mod fund;
+mod info;
+mod middlewares;
+mod router;
+mod state;
 mod user;
+mod webhook;
 
-use router::router;
 use dotenvy::dotenv;
+use router::router;
 
 #[tokio::main]
 async fn main() {

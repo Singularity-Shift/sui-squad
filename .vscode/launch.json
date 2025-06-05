@@ -82,15 +82,15 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug executable 'keeper'",
+            "name": "Debug executable 'sui-squard-server'",
             "cargo": {
                 "args": [
                     "build",
-                    "--bin=keeper",
-                    "--package=keeper"
+                    "--bin=sui-squard-server",
+                    "--package=sui-squard-server"
                 ],
                 "filter": {
-                    "name": "keeper",
+                    "name": "sui-squard-server",
                     "kind": "bin"
                 }
             },
@@ -100,16 +100,16 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug unit tests in executable 'keeper'",
+            "name": "Debug unit tests in executable 'sui-squard-server'",
             "cargo": {
                 "args": [
                     "test",
                     "--no-run",
-                    "--bin=keeper",
-                    "--package=keeper"
+                    "--bin=sui-squard-server",
+                    "--package=sui-squard-server"
                 ],
                 "filter": {
-                    "name": "keeper",
+                    "name": "sui-squard-server",
                     "kind": "bin"
                 }
             },

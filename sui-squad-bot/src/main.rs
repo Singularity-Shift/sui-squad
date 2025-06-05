@@ -1,25 +1,21 @@
 mod bot_manage;
-mod tools;
-mod services;
 mod middleware;
+mod services;
+mod tools;
 
 use anyhow::Result;
 use bot_manage::handler_tree::handler_tree;
 use dotenvy::dotenv;
 use services::services::Services;
 use squard_connect::{client::squard_connect::SquardConnect, service::dtos::Network};
-use std::env;
 use std::time::Duration;
+use std::{collections::HashMap, env};
 use sui_sdk::SuiClientBuilder;
 use sui_squad_core::{
-    ai::ResponsesClient, 
-    commands::bot_commands::LoginState, 
-    config::Config,
-    conversation::ConversationCache
+    ai::ResponsesClient, commands::bot_commands::LoginState, config::Config,
+    conversation::ConversationCache,
 };
-use teloxide::{
-    dispatching::dialogue::InMemStorage, prelude::*, types::BotCommand
-};
+use teloxide::{dispatching::dialogue::InMemStorage, prelude::*, types::BotCommand};
 use tracing_subscriber;
 
 #[tokio::main]
@@ -51,7 +47,7 @@ async fn main() -> Result<()> {
     // Create conversation cache with 10-minute TTL
     let conversation_cache = ConversationCache::new(Duration::from_secs(600));
     let cache_for_cleanup = conversation_cache.clone();
-    
+
     // Spawn cleanup task that runs every minute
     tokio::spawn(async move {
         let mut interval = tokio::time::interval(Duration::from_secs(60));
@@ -71,22 +67,25 @@ async fn main() -> Result<()> {
     let bot = Bot::new(cfg.teloxide_token.clone());
 
     let commands = vec![
-        BotCommand::new("login", "Login to the service."),
         BotCommand::new("prompt", "Send a prompt to the AI."),
         BotCommand::new("p", "Send a prompt to the AI (short alias)."),
         BotCommand::new("promptexamples", "Show prompt examples."),
+        BotCommand::new("fund", "Fund your account."),
         BotCommand::new("help", "Display this help message."),
     ];
 
     bot.set_my_commands(commands).await?;
 
+    let hash_map: HashMap<UserId, String> = HashMap::new();
+
     Dispatcher::builder(bot.clone(), handler_tree())
         .dependencies(dptree::deps![
             responses_client.clone(),
             InMemStorage::<LoginState>::new(),
-            squard_connect_client, 
+            squard_connect_client,
             services,
-            conversation_cache
+            conversation_cache,
+            hash_map
         ])
         .enable_ctrlc_handler()
         .build()

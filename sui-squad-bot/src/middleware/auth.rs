@@ -1,53 +1,97 @@
-use squard_connect::{client::squard_connect::SquardConnect, service::dtos::Network};
-use sui_squad_core::{commands::bot_commands::LoginState, helpers::dtos::AuthRequest};
+use std::collections::HashMap;
+use sui_squad_core::helpers::jwt::JwtManager;
+use sui_squad_core::{commands::bot_commands::LoginState, helpers::dtos::Storage};
 use teloxide::{dispatching::dialogue::InMemStorage, prelude::*, types::Message};
 
-use crate::services::services::Services;
-
-pub async fn auth(bot: Bot,msg: Message, dialogue: Dialogue<LoginState, InMemStorage<LoginState>>, squard_connect_client: SquardConnect, services: Services) -> bool {
-    let login_state = dialogue.get().await; 
+pub async fn auth(msg: Message, dialogue: Dialogue<LoginState, InMemStorage<LoginState>>) -> bool {
+    let login_state = dialogue.get().await;
+    let jwt_manager = JwtManager::new();
 
     if let Ok(ref login_state_option) = login_state {
         if let Some(login_state) = login_state_option {
-            if let LoginState::Authenticated(_seed_address) = login_state {
-                return true;
+            let user_opt = msg.from();
+
+            if let Some(user) = user_opt {
+                if let LoginState::LocalStorate(users) = login_state {
+                    if let Some(storage_str) = users.get(&user.id) {
+                        let storage_result: Result<_, serde_json::Error> =
+                            serde_json::from_str::<Storage>(storage_str);
+
+                        if let Ok(storage) = storage_result {
+                            // Initialize JWT manager and validate/update storage
+
+                            match jwt_manager.validate_and_update_storage(storage, user.id) {
+                                Ok(_updated_storage) => {
+                                    println!(
+                                        "✅ JWT token validated/generated for user {}",
+                                        user.id
+                                    );
+                                    // Note: The updated storage with the new JWT would need to be
+                                    // persisted back to the dialogue storage in the calling code
+                                    return true;
+                                }
+                                Err(e) => {
+                                    println!("❌ Failed to validate/generate JWT: {}", e);
+                                }
+                            }
+
+                            return generate_new_storage(
+                                user.id,
+                                jwt_manager,
+                                users.clone(),
+                                dialogue,
+                            )
+                            .await;
+                        }
+                    } else {
+                        return generate_new_storage(user.id, jwt_manager, users.clone(), dialogue)
+                            .await;
+                    }
+                } else {
+                    let users = HashMap::new();
+                    return generate_new_storage(user.id, jwt_manager, users, dialogue).await;
+                }
             }
         }
     } else {
-        println!("Error getting dialogue state: {:?}", login_state.as_ref().err());
+        println!(
+            "Error getting dialogue state: {:?}",
+            login_state.as_ref().err()
+        );
+
+        return false;
     }
-    
-    let auth_request = AuthRequest {
-        bot_id: bot.get_me().await.unwrap().id.to_string(),
-        user_id: msg.from().unwrap().id.to_string(),
-    };
 
-    println!("Auth request: {:?}", auth_request);
-    
-    let user = services.auth(auth_request).await;
+    false
+}
 
-    if let Ok(user) = user {
-        let mut squard_connect_client = squard_connect_client.clone();
-        squard_connect_client.set_jwt(user.jwt.clone());
+async fn generate_new_storage(
+    user_id: UserId,
+    jwt_manager: JwtManager,
+    mut users: HashMap<UserId, String>,
+    dialogue: Dialogue<LoginState, InMemStorage<LoginState>>,
+) -> bool {
+    match jwt_manager.generate_token(user_id) {
+        Ok(token) => {
+            let storage = Storage { jwt: token };
 
-        squard_connect_client.set_zk_proof_params(Network::from(user.network), user.public_key, user.max_epoch, user.randomness);
-        
-        let zk_login_inputs_result = squard_connect_client.recover_seed_address().await;
+            let storage_str = serde_json::to_string(&storage).unwrap();
 
-        if let Ok(zk_loing_inputs) = zk_login_inputs_result {
-            let state = dialogue.update(LoginState::Authenticated(zk_loing_inputs)).await;
+            users.insert(user_id, storage_str);
 
-            if let Err(e) = state {
-                println!("Error updating dialogue: {:?}", e);
+            let new_login_state = LoginState::LocalStorate(users);
+
+            if let Err(e) = dialogue.update(new_login_state.clone()).await {
+                println!("❌ Failed to update dialogue state: {}", e);
                 return false;
             }
+
+            println!("✅ Generated new JWT token for user {}", user_id);
             return true;
-        } else {
-            println!("Error recovering seed address: {:?}", zk_login_inputs_result.err());
+        }
+        Err(e) => {
+            println!("❌ Failed to generate JWT token: {}", e);
             return false;
         }
-    } else {
-        println!("Error authenticating user: {:?}", user.err());
-        return false;
     }
 }
