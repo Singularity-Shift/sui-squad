@@ -1,12 +1,11 @@
-use std::{any::Any, env, str::FromStr, sync::Arc};
+use std::{env, str::FromStr, sync::Arc};
 
 use axum::{
     extract::State,
     http::HeaderMap,
     response::{Json, Result},
 };
-use shared_crypto::intent::Intent;
-use sui_keys::keystore::{AccountKeystore, FileBasedKeystore};
+
 use sui_sdk::{
     json::SuiJsonValue,
     rpc_types::{EventFilter, SuiTransactionBlockResponseOptions, SuiTypeTag},
@@ -14,15 +13,11 @@ use sui_sdk::{
         TypeTag,
         base_types::{ObjectID, SuiAddress},
         crypto::PublicKey,
-        digests::ObjectDigest,
         quorum_driver_types::ExecuteTransactionRequestType,
-        signature::GenericSignature,
-        transaction::Transaction,
-        zk_login_authenticator::ZkLoginAuthenticator,
     },
 };
 
-use crate::{admin::handler::get_account, error::ErrorKeeper, state::KeeperState};
+use crate::{error::ErrorKeeper, state::KeeperState};
 
 use super::dto::FundRequest;
 use sui_squad_core::package::dto::Event;
@@ -209,7 +204,7 @@ pub async fn fund(
 
     let transaction = squard_connect_client
         .sign_transaction(
-            tx,
+            tx.clone(),
             signer_address,
             zk_login_inputs,
             fund_request.max_epoch,
@@ -221,27 +216,18 @@ pub async fn fund(
             status: 500,
         })?;
 
-    let account_address = SuiAddress::from(account_id_object_id);
-
-    let digest_str = squard_connect_client
-        .sponsor_transaction(
+    let transaction_response = node
+        .quorum_driver_api()
+        .execute_transaction_block(
             transaction,
-            sender,
-            vec![account_address.to_string()],
-            vec![format!("{}::account::fund", package_id)],
+            SuiTransactionBlockResponseOptions::full_content(),
+            Some(ExecuteTransactionRequestType::WaitForLocalExecution),
         )
         .await
-        .map_err(|e| ErrorKeeper {
-            message: e.to_string(),
-            status: 500,
-        })?;
+        .unwrap();
 
-    let digest = ObjectDigest::from_str(&digest_str).map_err(|e| ErrorKeeper {
-        message: e.to_string(),
-        status: 500,
-    })?;
-
-    println!("digest: {:?}", digest.base58_encode());
+    println!("transaction_response: {:?}", transaction_response);
+    println!("Transaction created successfully: {:?}", tx);
 
     Ok(())
 }

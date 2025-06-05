@@ -1,19 +1,27 @@
-use crate::tools::{
-    schema::get_schema,
-    tools::{send_json, withdraw_json},
+use crate::{
+    bot_manage::dto::BalanceObject,
+    tools::{
+        schema::get_schema,
+        tools::{send_json, withdraw_json},
+    },
 };
 use anyhow::Result as AnyhowResult;
 use reqwest::Url;
 use squard_connect::client::squard_connect::SquardConnect;
 use std::{env, path::PathBuf};
+use sui_sdk::{
+    rpc_types::EventFilter,
+    types::base_types::{ObjectID, SuiAddress},
+};
 use sui_squad_core::{
     ai::ResponsesClient, commands::bot_commands::LoginState, conversation::ConversationCache,
+    package::dto::Event,
 };
 use teloxide::{
     Bot,
     dispatching::dialogue::InMemStorage,
     prelude::*,
-    types::{InlineKeyboardButton, InlineKeyboardMarkup, Me, Message, ParseMode},
+    types::{InlineKeyboardButton, InlineKeyboardMarkup, Message, ParseMode},
 };
 
 use super::dto::State;
@@ -134,11 +142,7 @@ pub async fn handle_prompt(
             // Execute function based on name
             let result = match tool_call.name.as_str() {
                 "get_balance" => {
-                    let args: serde_json::Value = serde_json::from_str(&tool_call.arguments)
-                        .unwrap_or_else(|_| serde_json::json!({}));
-                    let token = args.get("token").and_then(|v| v.as_str()).map(String::from);
-                    handle_get_balance_tool(dialogue.clone(), squard_connect_client.clone(), token)
-                        .await
+                    handle_get_balance_tool(dialogue.clone(), squard_connect_client.clone()).await
                 }
                 "withdraw" => {
                     let args: serde_json::Value = serde_json::from_str(&tool_call.arguments)
@@ -195,7 +199,153 @@ pub async fn handle_prompt(
 pub async fn handle_get_balance_tool(
     dialogue: Dialogue<LoginState, InMemStorage<LoginState>>,
     squard_connect_client: SquardConnect,
-    token: Option<String>,
 ) -> String {
-    "Balance functionality not implemented yet".to_string()
+    // Get telegram_id from dialogue state
+    let login_state = dialogue.get().await;
+    if login_state.is_err() {
+        return "Error: Unable to access user session".to_string();
+    }
+
+    let telegram_id_str = if let Some(LoginState::LocalStorate(storage)) = login_state.unwrap() {
+        // Find any user's telegram_id from storage keys (UserId is telegram_id)
+        if let Some(user_id) = storage.keys().next() {
+            user_id.to_string()
+        } else {
+            return "Error: No user found in session".to_string();
+        }
+    } else {
+        return "Error: User not logged in".to_string();
+    };
+
+    let node = squard_connect_client.get_node();
+
+    let account_events = node
+        .event_api()
+        .query_events(
+            EventFilter::MoveEventType(Event::AccountEvent.to_string().parse().unwrap()),
+            None,
+            None,
+            false,
+        )
+        .await;
+
+    if let Err(e) = account_events {
+        return e.to_string();
+    }
+
+    let account_events_data = account_events.unwrap();
+    let account_event = account_events_data.data.iter().find(|event| {
+        if let Some(telegram_id) = event.parsed_json.get("telegram_id") {
+            if let Some(event_telegram_id_str) = telegram_id.as_str() {
+                return event_telegram_id_str == telegram_id_str;
+            }
+        }
+        false
+    });
+
+    if account_event.is_none() {
+        return "Account not found".to_string();
+    }
+
+    let account_event = account_event.unwrap();
+
+    let account_id_value = account_event.parsed_json.get("account_id");
+
+    if account_id_value.is_none() {
+        return "Account id not found".to_string();
+    }
+
+    let account_id = account_id_value.unwrap().as_str();
+
+    if account_id.is_none() {
+        return "Account id not found".to_string();
+    }
+
+    let account_id = account_id.unwrap();
+
+    let account_id_object_id = ObjectID::from_hex_literal(account_id);
+
+    if account_id_object_id.is_err() {
+        return "Account id not found".to_string();
+    }
+
+    let account_id_object_id = account_id_object_id.unwrap();
+
+    let objects = node
+        .read_api()
+        .get_dynamic_fields(account_id_object_id, None, None)
+        .await;
+
+    if let Err(e) = objects {
+        return e.to_string();
+    }
+
+    let objects = objects.unwrap();
+
+    let object_info = objects.data.last();
+
+    if object_info.is_none() {
+        return "Object not found".to_string();
+    }
+
+    let object_info = object_info.unwrap();
+
+    let name = object_info.name.clone();
+
+    let object = node
+        .read_api()
+        .get_dynamic_field_object(account_id_object_id, name)
+        .await;
+
+    if let Err(e) = object {
+        return e.to_string();
+    }
+
+    let object = object.unwrap().data;
+
+    let object_data = object.unwrap();
+
+    let object_data_content = object_data.content.unwrap();
+
+    let balance_str = serde_json::to_string(&object_data_content);
+
+    if balance_str.is_err() {
+        return "Error: Unable to parse balance".to_string();
+    }
+
+    let balance_object = serde_json::from_str::<BalanceObject>(&balance_str.unwrap());
+
+    if balance_object.is_err() {
+        return "Error: Unable to parse balance".to_string();
+    }
+
+    let balance_object = balance_object.unwrap();
+
+    let balance = balance_object.fields.value.fields.balance.parse::<u64>();
+
+    if balance.is_err() {
+        return "Error: Unable to parse balance".to_string();
+    }
+
+    let balance = balance.unwrap();
+
+    // Convert from raw balance (with 9 decimals) to human-readable format
+    let sui_decimals = 1_000_000_000u64; // 10^9
+    let balance_in_sui = balance as f64 / sui_decimals as f64;
+
+    // Format balance with appropriate decimal places
+    let formatted_balance = if balance_in_sui == 0.0 {
+        "0 SUI".to_string()
+    } else if balance_in_sui < 0.001 {
+        // Show more decimals for very small amounts
+        format!("{:.9} SUI", balance_in_sui)
+    } else if balance_in_sui < 1.0 {
+        // Show 6 decimals for amounts less than 1 SUI
+        format!("{:.6} SUI", balance_in_sui)
+    } else {
+        // Show 3 decimals for amounts 1 SUI and above
+        format!("{:.3} SUI", balance_in_sui)
+    };
+
+    return formatted_balance;
 }

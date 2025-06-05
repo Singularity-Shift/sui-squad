@@ -67,10 +67,10 @@ async fn main() -> Result<()> {
     let bot = Bot::new(cfg.teloxide_token.clone());
 
     let commands = vec![
-        BotCommand::new("login", "Login to the service."),
         BotCommand::new("prompt", "Send a prompt to the AI."),
         BotCommand::new("p", "Send a prompt to the AI (short alias)."),
         BotCommand::new("promptexamples", "Show prompt examples."),
+        BotCommand::new("fund", "Fund your account."),
         BotCommand::new("help", "Display this help message."),
     ];
 

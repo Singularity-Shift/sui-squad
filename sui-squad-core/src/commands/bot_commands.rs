@@ -1,9 +1,6 @@
 use std::collections::HashMap;
 
-use fastcrypto_zkp::bn254::zk_login::ZkLoginInputs;
 use teloxide::{macros::BotCommands, types::UserId};
-
-use crate::helpers::dtos::Storage;
 
 #[derive(BotCommands, Clone, Debug)]
 #[command(

@@ -12,7 +12,6 @@ pub fn get_schema() -> Vec<Tool> {
             parameters: Some(json!({
                 "type": "object",
                 "properties": {
-                    "token": { "type": "string", "description": "Optional token type (e.g., SUI). If not provided, returns all balances." }
                 },
                 "required": [],
                 "additionalProperties": false

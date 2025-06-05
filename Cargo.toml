@@ -22,7 +22,7 @@ shared_crypto = { git = "https://github.com/mystenlabs/sui", package = "shared-c
 squard_connect = { git = "https://github.com/Singularity-Shift/squad_connect", package = "squard_connect", tag="0.1.13"}
 async-trait = "0.1"
 thiserror = "1.0"
-teloxide = { version = "0.12", features = ["macros", "webhooks-axum"] }
+teloxide = { version = "0.15", features = ["macros", "webhooks-axum"] }
 log = "0.4"
 pretty_env_logger = "0.5"
 config = "0.13"

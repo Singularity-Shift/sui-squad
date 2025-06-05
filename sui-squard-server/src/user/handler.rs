@@ -1,9 +1,6 @@
-use std::{env, str::FromStr, sync::Arc};
+use std::{env, sync::Arc};
 
-use axum::{
-    Json,
-    extract::{Request, State},
-};
+use axum::extract::{Request, State};
 use shared_crypto::intent::Intent;
 use sui_keys::keystore::{AccountKeystore, FileBasedKeystore};
 use sui_sdk::{

@@ -13,6 +13,7 @@ use std::env;
 #[axum::debug_handler]
 pub async fn webhook(_token: Path<String>) -> Html<String> {
     let enoki_api_key = env::var("ENOKI_API_KEY").unwrap_or_else(|_| "".to_string());
+    let redirect_back = env::var("REDIRECT_BACK").unwrap_or_else(|_| "".to_string());
 
     let html_content = format!(
         r#"
@@ -270,7 +271,7 @@ pub async fn webhook(_token: Path<String>) -> Html<String> {
                     if (!response.ok) {{
                         throw new Error(`Server responded with status: ${{response.status}}`);
                     }}
-                    return response.json();
+                    return response;
                 }})
                 .then(data => {{
                     button.textContent = '✅ Funding Complete!';
@@ -280,9 +281,27 @@ pub async fn webhook(_token: Path<String>) -> Html<String> {
                     messageDiv.innerHTML += `
                         <div class="message success" style="margin-top: 15px;">
                             <h4>🎉 Funding Successful!</h4>
-                            <p>Your Sui Squad account has been funded successfully. You can now return to the bot to start using your account.</p>
+                            <p>Your Sui Squad account has been funded successfully.</p>
+                            <div class="redirect-info" style="margin-top: 15px; padding: 10px; background-color: #e8f4fd; border-radius: 5px; color: #1e3a8a;">
+                                Redirecting to Sui Squad Bot in <span id="countdown" class="countdown" style="font-weight: bold; color: #4a6cf7;">5</span> seconds...
+                            </div>
                         </div>
                     `;
+                    
+                    // Start countdown and redirect
+                    let countdown = 5;
+                    const countdownElement = document.getElementById('countdown');
+                    
+                    const countdownTimer = setInterval(() => {{
+                        countdown--;
+                        countdownElement.textContent = countdown;
+                        
+                        if (countdown <= 0) {{
+                            clearInterval(countdownTimer);
+                            // Redirect to Telegram bot
+                            window.location.href = '{redirect_back}';
+                        }}
+                    }}, 1000);
                 }})
                 .catch(error => {{
                     button.disabled = false;
@@ -313,7 +332,8 @@ pub async fn webhook(_token: Path<String>) -> Html<String> {
     </body>
     </html>
     "#,
-        enoki_api_key = enoki_api_key
+        enoki_api_key = enoki_api_key,
+        redirect_back = redirect_back
     );
 
     Html(html_content)
