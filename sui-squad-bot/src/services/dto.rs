@@ -1,8 +1,9 @@
-use std::{fmt, env};
+use std::{env, fmt};
 
 pub enum Endpoints {
-    Auth,
     User,
+    Payment,
+    Withdraw,
 }
 
 impl fmt::Display for Endpoints {
@@ -11,8 +12,9 @@ impl fmt::Display for Endpoints {
         let backend_url = format!("https://{}", backend_host);
 
         match self {
-            &Endpoints::Auth => write!(f, "{}/auth", backend_url),
             &Endpoints::User => write!(f, "{}/user", backend_url),
+            &Endpoints::Payment => write!(f, "{}/payment", backend_url),
+            &Endpoints::Withdraw => write!(f, "{}/withdraw", backend_url),
         }
     }
 }

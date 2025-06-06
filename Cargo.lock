@@ -4845,9 +4845,9 @@ checksum = "c08d65885ee38876c4f86fa503fb49d7b507c2b62552df7c70b2fce627e06381"
 
 [[package]]
 name = "open-ai-rust-responses-by-sshift"
-version = "0.1.6"
+version = "0.1.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "00792d7a6db8b41869b35ee471b2473ae1df5019626db4f2f1c981b2439f4e15"
+checksum = "1ddf3e3c5f267fb8a45430d1ab86d8433158292538daebf4566cc2b67af9e0bf"
 dependencies = [
  "async-fn-stream",
  "chrono",
@@ -7633,6 +7633,7 @@ dependencies = [
  "reqwest 0.12.18",
  "serde",
  "serde_json",
+ "sled",
  "squard_connect",
  "sui-sdk",
  "sui-squad-core",
@@ -7678,7 +7679,6 @@ dependencies = [
  "serde",
  "serde_json",
  "shared-crypto",
- "sled",
  "squard_connect",
  "sui-keys",
  "sui-sdk",
