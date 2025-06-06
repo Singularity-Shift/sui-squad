@@ -12,8 +12,8 @@ A modular, Sui-agnostic Telegram bot infrastructure in Rust, designed for easy b
 
 ## Repository Structure
 ```
-sui-squad-bot/      # Binary crate (main entrypoint)
-sui-squad-core/     # Library crate (all logic, reusable)
+sui-squard-bot/      # Binary crate (main entrypoint)
+sui-squard-core/     # Library crate (all logic, reusable)
 .env.example        # Example environment variables
 ```
 

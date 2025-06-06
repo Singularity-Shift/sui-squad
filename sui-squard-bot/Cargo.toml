@@ -1,10 +1,10 @@
 [package]
-name = "sui-squad-bot"
+name = "sui-squard-bot"
 version.workspace = true
 edition = "2024"  # Changed from 2024 to 2021 for better compatibility
 
 [dependencies]
-sui-squad-core.workspace = true
+sui-squard-core.workspace = true
 teloxide.workspace = true
 tokio.workspace = true
 tracing.workspace = true

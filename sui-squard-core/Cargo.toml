@@ -1,5 +1,5 @@
 [package]
-name = "sui-squad-core"
+name = "sui-squard-core"
 version.workspace = true
 edition = "2024"
 
