@@ -18,6 +18,7 @@ tracing-subscriber.workspace = true
 reqwest.workspace = true
 axum.workspace = true
 tower.workspace = true
+sled.workspace = true
 tower-http.workspace = true
 squard_connect.workspace = true
 jsonwebtoken.workspace = true

@@ -1,20 +1,18 @@
 use crate::{
-    bot_manage::dto::BalanceObject,
-    tools::{
-        schema::get_schema,
-        tools::{send_json, withdraw_json},
-    },
+    bot_manage::dto::BalanceObject, services::services::Services, tools::schema::get_schema,
 };
 use anyhow::Result as AnyhowResult;
+
 use reqwest::Url;
+use sled::Db;
 use squard_connect::client::squard_connect::SquardConnect;
 use std::{env, path::PathBuf};
-use sui_sdk::{
-    rpc_types::EventFilter,
-    types::base_types::{ObjectID, SuiAddress},
-};
+use sui_sdk::{rpc_types::EventFilter, types::base_types::ObjectID};
 use sui_squad_core::{
-    ai::ResponsesClient, commands::bot_commands::LoginState, conversation::ConversationCache,
+    ai::ResponsesClient,
+    commands::bot_commands::LoginState,
+    conversation::ConversationCache,
+    helpers::dtos::{PaymentRequest, Storage, WithdrawRequest},
     package::dto::Event,
 };
 use teloxide::{
@@ -37,7 +35,7 @@ pub async fn handle_fund(
     let mut squard_connect_client = squard_connect_client.clone();
 
     if !current_chat.is_group() {
-        let user_id = msg.from().unwrap().id.to_string();
+        let user_id = msg.from.unwrap().id.to_string();
 
         let path_str = env::var("KEYSTORE_PATH").expect("PATH env variable is not set");
 
@@ -94,9 +92,15 @@ pub async fn handle_prompt(
     dialogue: Dialogue<LoginState, InMemStorage<LoginState>>,
     squard_connect_client: SquardConnect,
     conversation_cache: ConversationCache,
+    db: Db,
 ) -> AnyhowResult<Message> {
     // Get user key for cache (user_id, chat_id)
-    let user_key = (msg.from().unwrap().id.to_string(), msg.chat.id.to_string());
+    let user_key = (
+        msg.from.clone().unwrap().id.to_string(),
+        msg.chat.id.to_string(),
+    );
+
+    let user = msg.from.clone();
 
     // Get cached conversation ID
     let previous_response_id = conversation_cache.get(&user_key).await;
@@ -145,14 +149,37 @@ pub async fn handle_prompt(
                     handle_get_balance_tool(dialogue.clone(), squard_connect_client.clone()).await
                 }
                 "withdraw" => {
+                    let user_clone = user.clone();
+                    if user_clone.is_none() {
+                        return Err(anyhow::anyhow!("User not found"));
+                    }
+
                     let args: serde_json::Value = serde_json::from_str(&tool_call.arguments)
                         .unwrap_or_else(|_| serde_json::json!({}));
-                    withdraw_json(&args)
+                    handle_withdraw_tool(
+                        dialogue.clone(),
+                        user_clone.unwrap().id,
+                        args,
+                        Services::new(),
+                    )
+                    .await
                 }
                 "send" => {
+                    let user_clone = user.clone();
+                    if user_clone.is_none() {
+                        return Err(anyhow::anyhow!("User not found"));
+                    }
+
                     let args: serde_json::Value = serde_json::from_str(&tool_call.arguments)
                         .unwrap_or_else(|_| serde_json::json!({}));
-                    send_json(&args)
+                    handle_send_tool(
+                        dialogue.clone(),
+                        user_clone.unwrap().id,
+                        args,
+                        Services::new(),
+                        db.clone(),
+                    )
+                    .await
                 }
                 _ => format!("Unknown function call: {}", tool_call.name),
             };
@@ -348,4 +375,216 @@ pub async fn handle_get_balance_tool(
     };
 
     return formatted_balance;
+}
+
+pub async fn handle_send_tool(
+    dialogue: Dialogue<LoginState, InMemStorage<LoginState>>,
+    chat: UserId,
+    args: serde_json::Value,
+    services: Services,
+    db: Db,
+) -> String {
+    let sui_explorer_url = env::var("SUI_EXPLORER_URL");
+
+    if sui_explorer_url.is_err() {
+        return "Error: SUI_EXPLORER_URL is not set".to_string();
+    }
+
+    let sui_explorer_url = sui_explorer_url.unwrap();
+    let login_state = dialogue.get().await;
+
+    if login_state.is_err() {
+        return "Error: Unable to access user session".to_string();
+    }
+
+    let user_id = chat;
+
+    let login_state = login_state.unwrap();
+
+    if let Some(LoginState::LocalStorate(storage)) = login_state {
+        let token = storage.get(&user_id);
+
+        if token.is_none() {
+            return "Error: User not found".to_string();
+        }
+
+        let token_storage = token.unwrap();
+        let storage: Storage = serde_json::from_str(&token_storage)
+            .map_err(|_| {
+                return "Error: Failed to parse token storage".to_string();
+            })
+            .unwrap();
+        let token = storage.jwt;
+        let targets = args.get("targets");
+        let amount_value = args.get("amount");
+
+        if targets.is_none() {
+            return "Error: Target is required".to_string();
+        }
+
+        let targets = targets.unwrap();
+
+        if amount_value.is_none() {
+            return "Error: Amount is required".to_string();
+        }
+
+        println!("amount_value: {:?}", amount_value.unwrap());
+
+        let amount_number = amount_value.unwrap().as_f64();
+
+        if amount_number.is_none() {
+            return "Error: Amount is required".to_string();
+        }
+
+        // Convert SUI amount to raw format (9 decimal places)
+        let sui_decimals = 1_000_000_000u64; // 10^9
+        let amount = (amount_number.unwrap() * sui_decimals as f64) as u64;
+
+        if targets.is_array() {
+            let targets = targets.as_array().unwrap();
+            let tasks: Vec<_> = targets
+                .iter()
+                .map(|target| {
+                    let target = target.as_str().unwrap().to_string();
+                    let token = token.clone();
+                    let services = services.clone();
+                    let db = db.clone();
+                    let sui_explorer_url = sui_explorer_url.clone();
+
+                    tokio::spawn(async move {
+                        let target_id = db.get(&target);
+
+                        if target_id.is_err() {
+                            return "Error: Target not found".to_string();
+                        }
+
+                        let target_id = target_id.unwrap();
+
+                        if target_id.is_none() {
+                            return "Error: Target not found".to_string();
+                        }
+
+                        let target_id_vec = target_id.unwrap();
+
+                        let target_id = serde_json::from_slice::<u64>(&target_id_vec);
+
+                        if target_id.is_err() {
+                            return "Error: Failed to parse target id".to_string();
+                        }
+
+                        let request = PaymentRequest {
+                            amount,
+                            receiver_id: target_id.unwrap().to_string(),
+                        };
+
+                        let digests = services.payment(token, request).await;
+
+                        if digests.is_err() {
+                            return "Error: Failed to send payment".to_string();
+                        }
+
+                        let digests = digests.unwrap();
+                        format!("{}/txblock/{}", sui_explorer_url, digests.digest)
+                    })
+                })
+                .collect();
+
+            let mut digests = Vec::new();
+            for task in tasks {
+                match task.await {
+                    Ok(result) => digests.push(result),
+                    Err(_) => digests.push("Error: Task failed".to_string()),
+                }
+            }
+
+            return digests.join(", ");
+        } else {
+            return "Error: Targets must be an array".to_string();
+        }
+    } else {
+        return "Error: Targets must be an array".to_string();
+    }
+}
+
+pub async fn handle_withdraw_tool(
+    dialogue: Dialogue<LoginState, InMemStorage<LoginState>>,
+    chat: UserId,
+    args: serde_json::Value,
+    services: Services,
+) -> String {
+    let sui_explorer_url = env::var("SUI_EXPLORER_URL");
+
+    if sui_explorer_url.is_err() {
+        return "Error: SUI_EXPLORER_URL is not set".to_string();
+    }
+
+    let sui_explorer_url = sui_explorer_url.unwrap();
+    let login_state = dialogue.get().await;
+
+    if login_state.is_err() {
+        return "Error: Unable to access user session".to_string();
+    }
+
+    let user_id = chat;
+
+    let login_state = login_state.unwrap();
+
+    if let Some(LoginState::LocalStorate(storage)) = login_state {
+        let token = storage.get(&user_id);
+
+        if token.is_none() {
+            return "Error: User not found".to_string();
+        }
+
+        let token_storage = token.unwrap();
+        let storage: Storage = serde_json::from_str(&token_storage)
+            .map_err(|_| {
+                return "Error: Failed to parse token storage".to_string();
+            })
+            .unwrap();
+        let token = storage.jwt;
+
+        let amount_value = args.get("amount");
+
+        if amount_value.is_none() {
+            return "Error: Amount is required".to_string();
+        }
+
+        let amount_number = amount_value.unwrap().as_f64();
+
+        if amount_number.is_none() {
+            return "Error: Amount is required".to_string();
+        }
+
+        let amount = (amount_number.unwrap() * 1_000_000_000 as f64) as u64;
+
+        let address_value = args.get("address");
+
+        if address_value.is_none() {
+            return "Error: Address is required".to_string();
+        }
+
+        let address = address_value.unwrap().as_str();
+
+        if address.is_none() {
+            return "Error: Address is required".to_string();
+        }
+
+        let request = WithdrawRequest {
+            amount,
+            address: address.unwrap().to_string(),
+        };
+
+        let digests = services.withdraw(token, request).await;
+
+        if digests.is_err() {
+            return "Error: Failed to withdraw".to_string();
+        }
+
+        let digests = digests.unwrap();
+
+        return format!("{}/txblock/{}", sui_explorer_url, digests.digest);
+    } else {
+        return "Error: User not found".to_string();
+    }
 }

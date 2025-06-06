@@ -1,4 +1,5 @@
 mod bot_manage;
+mod db;
 mod middleware;
 mod services;
 mod tools;
@@ -8,8 +9,8 @@ use bot_manage::handler_tree::handler_tree;
 use dotenvy::dotenv;
 use services::services::Services;
 use squard_connect::{client::squard_connect::SquardConnect, service::dtos::Network};
+use std::env;
 use std::time::Duration;
-use std::{collections::HashMap, env};
 use sui_sdk::SuiClientBuilder;
 use sui_squad_core::{
     ai::ResponsesClient, commands::bot_commands::LoginState, config::Config,
@@ -44,6 +45,8 @@ async fn main() -> Result<()> {
 
     let services = Services::new();
 
+    let db = db::init_tree();
+
     // Create conversation cache with 10-minute TTL
     let conversation_cache = ConversationCache::new(Duration::from_secs(600));
     let cache_for_cleanup = conversation_cache.clone();
@@ -76,8 +79,6 @@ async fn main() -> Result<()> {
 
     bot.set_my_commands(commands).await?;
 
-    let hash_map: HashMap<UserId, String> = HashMap::new();
-
     Dispatcher::builder(bot.clone(), handler_tree())
         .dependencies(dptree::deps![
             responses_client.clone(),
@@ -85,7 +86,7 @@ async fn main() -> Result<()> {
             squard_connect_client,
             services,
             conversation_cache,
-            hash_map
+            db
         ])
         .enable_ctrlc_handler()
         .build()

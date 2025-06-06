@@ -9,19 +9,15 @@ pub fn get_schema() -> Vec<Tool> {
             description: Some(
                 "Get the user's balance for all tokens or a specific token".to_string(),
             ),
-            parameters: Some(json!({
-                "type": "object",
-                "properties": {
-                },
-                "required": [],
-                "additionalProperties": false
-            })),
+            parameters: None,
             function: None,
             vector_store_ids: Some(vec![]),
             container: None,
             server_label: None,
             server_url: None,
             headers: None,
+            partial_images: None,
+            require_approval: None,
         },
         Tool {
             tool_type: "function".to_string(),
@@ -32,10 +28,10 @@ pub fn get_schema() -> Vec<Tool> {
             parameters: Some(json!({
                 "type": "object",
                 "properties": {
-                    "amount": { "type": "string" },
-                    "coin": { "type": "string" }
+                    "amount": { "type": "number", "description": "amount of SUI to withdraw (e.g., 1.5 for 1.5 SUI)" },
+                    "address": { "type": "string", "description": "address to withdraw to" },
                 },
-                "required": ["amount", "coin"],
+                "required": ["amount", "address"],
                 "additionalProperties": false
             })),
             function: None,
@@ -44,6 +40,8 @@ pub fn get_schema() -> Vec<Tool> {
             server_label: None,
             server_url: None,
             headers: None,
+            partial_images: None,
+            require_approval: None,
         },
         Tool {
             tool_type: "function".to_string(),
@@ -55,11 +53,10 @@ pub fn get_schema() -> Vec<Tool> {
             parameters: Some(json!({
                 "type": "object",
                 "properties": {
-                    "target": { "type": "string", "description": "Telegram ID or 'everyone'" },
-                    "amount": { "type": "string" },
-                    "coin": { "type": "string" }
+                    "targets": { "type": "array","description": "telegram usernames without @ for example ['mytestuser', 'mytestuser2']", "items": { "type": "string" }},
+                    "amount": { "type": "number","description": "amount of SUI to send (e.g., 1.5 for 1.5 SUI)" },
                 },
-                "required": ["target", "amount", "coin"],
+                "required": ["targets", "amount"],
                 "additionalProperties": false
             })),
             function: None,
@@ -68,6 +65,8 @@ pub fn get_schema() -> Vec<Tool> {
             server_label: None,
             server_url: None,
             headers: None,
+            partial_images: None,
+            require_approval: None,
         },
     ]
 }

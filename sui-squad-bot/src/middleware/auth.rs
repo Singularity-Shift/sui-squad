@@ -9,7 +9,7 @@ pub async fn auth(msg: Message, dialogue: Dialogue<LoginState, InMemStorage<Logi
 
     if let Ok(ref login_state_option) = login_state {
         if let Some(login_state) = login_state_option {
-            let user_opt = msg.from();
+            let user_opt = msg.from;
 
             if let Some(user) = user_opt {
                 if let LoginState::LocalStorate(users) = login_state {

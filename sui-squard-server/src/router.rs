@@ -16,9 +16,11 @@ use crate::{
     fund::handler::fund,
     info::handler::info,
     middlewares::handler::auth,
+    payment::handler::payment,
     state::KeeperState,
     user::handler::create_user_if_not_exists,
     webhook::handler::webhook,
+    withdraw::handler::withdraw,
 };
 use tower_http::trace::TraceLayer;
 
@@ -53,6 +55,8 @@ pub async fn router() -> Router {
 
     let auth_routers = Router::new()
         .route("/user", post(create_user_if_not_exists))
+        .route("/payment", post(payment))
+        .route("/withdraw", post(withdraw))
         .route_layer(middleware::from_fn(auth));
 
     Router::new()

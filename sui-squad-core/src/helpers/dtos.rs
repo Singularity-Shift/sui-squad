@@ -30,6 +30,23 @@ pub struct FundRequest {
     pub user_id: String,
 }
 
+#[derive(Deserialize, Serialize, Debug, ToSchema)]
+pub struct PaymentRequest {
+    pub receiver_id: String,
+    pub amount: u64,
+}
+
+#[derive(Deserialize, Serialize, Debug, ToSchema)]
+pub struct DigestResponse {
+    pub digest: String,
+}
+
+#[derive(Deserialize, Serialize, Debug, ToSchema)]
+pub struct WithdrawRequest {
+    pub amount: u64,
+    pub address: String,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct UserPayload {
     pub telegram_id: String,

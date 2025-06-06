@@ -4,10 +4,12 @@ mod error;
 mod fund;
 mod info;
 mod middlewares;
+mod payment;
 mod router;
 mod state;
 mod user;
 mod webhook;
+mod withdraw;
 
 use dotenvy::dotenv;
 use router::router;
