@@ -20,7 +20,7 @@ use sui_sdk::{
 use crate::{error::ErrorKeeper, state::KeeperState};
 
 use super::dto::FundRequest;
-use sui_squad_core::package::dto::Event;
+use sui_squad_core::{helpers::dtos::DigestResponse, package::dto::Event};
 
 #[utoipa::path(
     post,
@@ -37,7 +37,7 @@ pub async fn fund(
     State(keeper_state): State<Arc<KeeperState>>,
     headers: HeaderMap,
     Json(fund_request): Json<FundRequest>,
-) -> Result<(), ErrorKeeper> {
+) -> Result<Json<DigestResponse>, ErrorKeeper> {
     let package_id = env::var("SUI_SQUARD_PACKAGE_ID").expect("SUI_SQUARD_PACKAGE_ID is not set");
 
     let node = keeper_state.squard_connect_client().get_node();
@@ -229,5 +229,7 @@ pub async fn fund(
     println!("transaction_response: {:?}", transaction_response);
     println!("Transaction created successfully: {:?}", tx);
 
-    Ok(())
+    Ok(Json(DigestResponse {
+        digest: transaction_response.digest.to_string(),
+    }))
 }
