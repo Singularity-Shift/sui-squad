@@ -151,6 +151,10 @@ pub async fn withdraw(
         status: 500,
     })?;
 
+    let address = &withdraw_request.address;
+
+    let address_object_id = ObjectID::from_address(address.parse().unwrap());
+
     let tx = node
         .transaction_builder()
         .move_call(
@@ -169,6 +173,7 @@ pub async fn withdraw(
                     message: e.to_string(),
                     status: 500,
                 })?,
+                SuiJsonValue::from_object_id(address_object_id),
             ],
             None,
             10_000_000,

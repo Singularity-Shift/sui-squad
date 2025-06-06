@@ -1,7 +1,5 @@
 use crate::{
-    bot_manage::dto::BalanceObject,
-    services::services::Services,
-    tools::{schema::get_schema, tools::withdraw_json},
+    bot_manage::dto::BalanceObject, services::services::Services, tools::schema::get_schema,
 };
 use anyhow::Result as AnyhowResult;
 
@@ -14,7 +12,7 @@ use sui_squad_core::{
     ai::ResponsesClient,
     commands::bot_commands::LoginState,
     conversation::ConversationCache,
-    helpers::dtos::{PaymentRequest, Storage},
+    helpers::dtos::{PaymentRequest, Storage, WithdrawRequest},
     package::dto::Event,
 };
 use teloxide::{
@@ -151,9 +149,20 @@ pub async fn handle_prompt(
                     handle_get_balance_tool(dialogue.clone(), squard_connect_client.clone()).await
                 }
                 "withdraw" => {
+                    let user_clone = user.clone();
+                    if user_clone.is_none() {
+                        return Err(anyhow::anyhow!("User not found"));
+                    }
+
                     let args: serde_json::Value = serde_json::from_str(&tool_call.arguments)
                         .unwrap_or_else(|_| serde_json::json!({}));
-                    withdraw_json(&args)
+                    handle_withdraw_tool(
+                        dialogue.clone(),
+                        user_clone.unwrap().id,
+                        args,
+                        Services::new(),
+                    )
+                    .await
                 }
                 "send" => {
                     let user_clone = user.clone();
@@ -494,5 +503,88 @@ pub async fn handle_send_tool(
         }
     } else {
         return "Error: Targets must be an array".to_string();
+    }
+}
+
+pub async fn handle_withdraw_tool(
+    dialogue: Dialogue<LoginState, InMemStorage<LoginState>>,
+    chat: UserId,
+    args: serde_json::Value,
+    services: Services,
+) -> String {
+    let sui_explorer_url = env::var("SUI_EXPLORER_URL");
+
+    if sui_explorer_url.is_err() {
+        return "Error: SUI_EXPLORER_URL is not set".to_string();
+    }
+
+    let sui_explorer_url = sui_explorer_url.unwrap();
+    let login_state = dialogue.get().await;
+
+    if login_state.is_err() {
+        return "Error: Unable to access user session".to_string();
+    }
+
+    let user_id = chat;
+
+    let login_state = login_state.unwrap();
+
+    if let Some(LoginState::LocalStorate(storage)) = login_state {
+        let token = storage.get(&user_id);
+
+        if token.is_none() {
+            return "Error: User not found".to_string();
+        }
+
+        let token_storage = token.unwrap();
+        let storage: Storage = serde_json::from_str(&token_storage)
+            .map_err(|_| {
+                return "Error: Failed to parse token storage".to_string();
+            })
+            .unwrap();
+        let token = storage.jwt;
+
+        let amount_value = args.get("amount");
+
+        if amount_value.is_none() {
+            return "Error: Amount is required".to_string();
+        }
+
+        let amount_number = amount_value.unwrap().as_f64();
+
+        if amount_number.is_none() {
+            return "Error: Amount is required".to_string();
+        }
+
+        let amount = (amount_number.unwrap() * 1_000_000_000 as f64) as u64;
+
+        let address_value = args.get("address");
+
+        if address_value.is_none() {
+            return "Error: Address is required".to_string();
+        }
+
+        let address = address_value.unwrap().as_str();
+
+        if address.is_none() {
+            return "Error: Address is required".to_string();
+        }
+
+        let request = WithdrawRequest {
+            amount,
+            address: address.unwrap().to_string(),
+        };
+
+        let digests = services.withdraw(token, request).await;
+
+        if digests.is_err() {
+            return "Error: Failed to withdraw".to_string();
+        }
+
+        let digests = digests.unwrap();
+
+        return format!("{}/txblock/{}", sui_explorer_url, digests.digest);
+    } else {
+        return "Error: User not found".to_string();
     }
 }

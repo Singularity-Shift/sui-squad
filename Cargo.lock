@@ -7062,7 +7062,7 @@ dependencies = [
 [[package]]
 name = "squard_connect"
 version = "0.1.13"
-source = "git+https://github.com/Singularity-Shift/squad_connect?tag=0.1.13#80d03b4c50821f7147e8ff2aed6ffb81f86b0eb6"
+source = "git+https://github.com/Singularity-Shift/squard_connect?tag=0.1.13#80d03b4c50821f7147e8ff2aed6ffb81f86b0eb6"
 dependencies = [
  "async-trait",
  "base64 0.22.1",

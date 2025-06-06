@@ -9,8 +9,8 @@ use bot_manage::handler_tree::handler_tree;
 use dotenvy::dotenv;
 use services::services::Services;
 use squard_connect::{client::squard_connect::SquardConnect, service::dtos::Network};
+use std::env;
 use std::time::Duration;
-use std::{collections::HashMap, env};
 use sui_sdk::SuiClientBuilder;
 use sui_squad_core::{
     ai::ResponsesClient, commands::bot_commands::LoginState, config::Config,

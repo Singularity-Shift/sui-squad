@@ -9,13 +9,7 @@ pub fn get_schema() -> Vec<Tool> {
             description: Some(
                 "Get the user's balance for all tokens or a specific token".to_string(),
             ),
-            parameters: Some(json!({
-                "type": "object",
-                "properties": {
-                },
-                "required": [],
-                "additionalProperties": false
-            })),
+            parameters: None,
             function: None,
             vector_store_ids: Some(vec![]),
             container: None,
@@ -34,9 +28,10 @@ pub fn get_schema() -> Vec<Tool> {
             parameters: Some(json!({
                 "type": "object",
                 "properties": {
-                    "amount": { "type": "string" },
+                    "amount": { "type": "number", "description": "amount of SUI to withdraw (e.g., 1.5 for 1.5 SUI)" },
+                    "address": { "type": "string", "description": "address to withdraw to" },
                 },
-                "required": ["amount"],
+                "required": ["amount", "address"],
                 "additionalProperties": false
             })),
             function: None,

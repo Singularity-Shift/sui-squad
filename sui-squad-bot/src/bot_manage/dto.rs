@@ -26,11 +26,13 @@ pub struct BalanceFields {
     pub value: ValueField,
 }
 
+#[warn(dead_code)]
 #[derive(Debug, Deserialize)]
 pub struct IdField {
     pub id: String,
 }
 
+#[warn(dead_code)]
 #[derive(Debug, Deserialize)]
 pub struct NameField {
     #[serde(rename = "type")]
@@ -38,6 +40,7 @@ pub struct NameField {
     pub fields: DummyFields,
 }
 
+#[warn(dead_code)]
 #[derive(Debug, Deserialize)]
 pub struct DummyFields {
     pub dummy_field: bool,

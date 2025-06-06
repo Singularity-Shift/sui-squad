@@ -107,6 +107,30 @@ pub async fn webhook(_token: Path<String>) -> Html<String> {
                 word-break: break-all;
                 margin: 10px 0;
                 border: 1px solid #ddd;
+                position: relative;
+            }}
+            .copy-button {{
+                background-color: #6c757d;
+                color: white;
+                border: none;
+                padding: 8px 12px;
+                border-radius: 4px;
+                font-size: 12px;
+                cursor: pointer;
+                margin-left: 10px;
+                transition: all 0.3s;
+            }}
+            .copy-button:hover {{
+                background-color: #5a6268;
+            }}
+            .copy-button.copied {{
+                background-color: #28a745;
+            }}
+            .address-row {{
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                flex-wrap: wrap;
             }}
             .fund-button {{
                 background-color: #4a6cf7;
@@ -214,7 +238,12 @@ pub async fn webhook(_token: Path<String>) -> Html<String> {
                             <h3>💰 Fund Your Sui Squad Account</h3>
                             <p>Please transfer SUI tokens to the following address:</p>
                             <div class="address-container">
-                                <div class="address-text">${{response.data.address}}</div>
+                                <div class="address-row">
+                                    <div class="address-text" id="wallet-address">${{response.data.address}}</div>
+                                    <button class="copy-button" onclick="copyAddress()" id="copy-btn">
+                                        📋 Copy
+                                    </button>
+                                </div>
                                 <p><small>Copy the address above and transfer SUI tokens to fund your account.</small></p>
                                 <button class="fund-button" onclick="fundAccount('${{publicKey}}', '${{telegramId}}', '${{maxEpoch}}', '${{randomness}}', '${{idToken}}')">
                                     ✅ I've Sent the Transfer - Complete Funding
@@ -243,6 +272,47 @@ pub async fn webhook(_token: Path<String>) -> Html<String> {
                     messageDiv.style.whiteSpace = 'pre-line';
                 }}
             }});
+
+            function copyAddress() {{
+                const addressElement = document.getElementById('wallet-address');
+                const copyButton = document.getElementById('copy-btn');
+                const address = addressElement.textContent;
+
+                navigator.clipboard.writeText(address).then(() => {{
+                    // Visual feedback
+                    copyButton.textContent = '✅ Copied!';
+                    copyButton.classList.add('copied');
+                    
+                    // Reset button after 2 seconds
+                    setTimeout(() => {{
+                        copyButton.textContent = '📋 Copy';
+                        copyButton.classList.remove('copied');
+                    }}, 2000);
+                }}).catch(err => {{
+                    console.error('Failed to copy: ', err);
+                    // Fallback for older browsers
+                    try {{
+                        const textArea = document.createElement('textarea');
+                        textArea.value = address;
+                        document.body.appendChild(textArea);
+                        textArea.select();
+                        document.execCommand('copy');
+                        document.body.removeChild(textArea);
+                        
+                        copyButton.textContent = '✅ Copied!';
+                        copyButton.classList.add('copied');
+                        setTimeout(() => {{
+                            copyButton.textContent = '📋 Copy';
+                            copyButton.classList.remove('copied');
+                        }}, 2000);
+                    }} catch (fallbackErr) {{
+                        copyButton.textContent = '❌ Failed';
+                        setTimeout(() => {{
+                            copyButton.textContent = '📋 Copy';
+                        }}, 2000);
+                    }}
+                }});
+            }}
 
             function fundAccount(publicKey, telegramId, maxEpoch, randomness, token) {{
                 const button = event.target;

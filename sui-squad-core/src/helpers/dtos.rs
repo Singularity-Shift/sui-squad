@@ -44,6 +44,7 @@ pub struct DigestResponse {
 #[derive(Deserialize, Serialize, Debug, ToSchema)]
 pub struct WithdrawRequest {
     pub amount: u64,
+    pub address: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
