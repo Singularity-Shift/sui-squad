@@ -8,7 +8,6 @@ pub fn get_account() -> (SuiAddress, PathBuf) {
     let seed = seed.trim_matches('"');
 
     let keystore_path = env::var("KEYSTORE_PATH").expect("KEYSTORE_PATH must be set");
-    let default_key = env::var("DEFAULT_KEY").expect("DEFAULT_KEY must be set");
 
     let path = PathBuf::from(keystore_path);
 
