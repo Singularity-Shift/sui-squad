@@ -1,5 +1,5 @@
 use sled::Db;
-use sui_squad_core::{commands::bot_commands::LoginState, helpers::dtos::Storage};
+use sui_squard_core::{commands::bot_commands::LoginState, helpers::dtos::Storage};
 use teloxide::{
     dispatching::dialogue::InMemStorage,
     prelude::Dialogue,

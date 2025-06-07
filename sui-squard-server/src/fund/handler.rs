@@ -20,7 +20,7 @@ use sui_sdk::{
 use crate::{error::ErrorKeeper, state::KeeperState};
 
 use super::dto::FundRequest;
-use sui_squad_core::{helpers::dtos::DigestResponse, package::dto::Event};
+use sui_squard_core::{helpers::dtos::DigestResponse, package::dto::Event};
 
 #[utoipa::path(
     post,

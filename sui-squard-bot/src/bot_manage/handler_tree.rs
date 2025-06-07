@@ -1,5 +1,5 @@
 use anyhow::Result;
-use sui_squad_core::commands::bot_commands::{Command, LoginState};
+use sui_squard_core::commands::bot_commands::{Command, LoginState};
 use teloxide::{
     Bot,
     dispatching::{DpHandlerDescription, HandlerExt, UpdateFilterExt, dialogue::InMemStorage},

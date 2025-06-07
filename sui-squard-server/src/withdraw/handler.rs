@@ -13,8 +13,8 @@ use sui_sdk::{
         transaction::Transaction,
     },
 };
-use sui_squad_core::helpers::dtos::UserPayload;
-use sui_squad_core::{
+use sui_squard_core::helpers::dtos::UserPayload;
+use sui_squard_core::{
     helpers::dtos::{DigestResponse, WithdrawRequest},
     package::dto::Event,
 };

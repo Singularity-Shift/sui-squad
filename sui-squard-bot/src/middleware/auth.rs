@@ -1,6 +1,6 @@
 use std::collections::HashMap;
-use sui_squad_core::helpers::jwt::JwtManager;
-use sui_squad_core::{commands::bot_commands::LoginState, helpers::dtos::Storage};
+use sui_squard_core::helpers::jwt::JwtManager;
+use sui_squard_core::{commands::bot_commands::LoginState, helpers::dtos::Storage};
 use teloxide::{dispatching::dialogue::InMemStorage, prelude::*, types::Message};
 
 pub async fn auth(msg: Message, dialogue: Dialogue<LoginState, InMemStorage<LoginState>>) -> bool {

@@ -72,7 +72,7 @@
                     "--package=sui-squard-core"
                 ],
                 "filter": {
-                    "name": "sui_squad_core",
+                    "name": "sui_squard_core",
                     "kind": "lib"
                 }
             },

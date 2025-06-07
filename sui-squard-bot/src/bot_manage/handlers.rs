@@ -8,7 +8,7 @@ use sled::Db;
 use squard_connect::client::squard_connect::SquardConnect;
 use std::{env, path::PathBuf};
 use sui_sdk::{rpc_types::EventFilter, types::base_types::ObjectID};
-use sui_squad_core::{
+use sui_squard_core::{
     ai::ResponsesClient,
     commands::bot_commands::LoginState,
     conversation::ConversationCache,
@@ -611,10 +611,10 @@ pub async fn handle_login(
         };
 
         // Generate JWT token
-        let jwt_manager = sui_squad_core::helpers::jwt::JwtManager::new();
+        let jwt_manager = sui_squard_core::helpers::jwt::JwtManager::new();
         match jwt_manager.generate_token(user.id) {
             Ok(token) => {
-                let storage = sui_squad_core::helpers::dtos::Storage { jwt: token };
+                let storage = sui_squard_core::helpers::dtos::Storage { jwt: token };
                 let storage_str = serde_json::to_string(&storage).unwrap();
                 users.insert(user.id, storage_str);
 

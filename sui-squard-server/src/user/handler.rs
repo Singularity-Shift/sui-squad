@@ -11,7 +11,7 @@ use sui_sdk::{
         transaction::Transaction,
     },
 };
-use sui_squad_core::{helpers::dtos::UserPayload, package::dto::Event};
+use sui_squard_core::{helpers::dtos::UserPayload, package::dto::Event};
 
 use crate::{error::ErrorKeeper, state::KeeperState};
 

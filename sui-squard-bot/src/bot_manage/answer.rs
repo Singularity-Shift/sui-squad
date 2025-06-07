@@ -1,7 +1,7 @@
 use anyhow::Result;
 use sled::Db;
 use squard_connect::client::squard_connect::SquardConnect;
-use sui_squad_core::{
+use sui_squard_core::{
     ai::ResponsesClient, 
     commands::bot_commands::{Command, LoginState},
     conversation::ConversationCache

@@ -14,7 +14,7 @@ use sui_sdk::{
         transaction::Transaction,
     },
 };
-use sui_squad_core::{
+use sui_squard_core::{
     helpers::dtos::{DigestResponse, PaymentRequest, UserPayload},
     package::dto::Event,
 };

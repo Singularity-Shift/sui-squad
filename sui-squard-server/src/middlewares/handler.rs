@@ -1,5 +1,5 @@
 use axum::{extract::Request, middleware::Next, response::Response};
-use sui_squad_core::helpers::{dtos::UserPayload, jwt::JwtManager};
+use sui_squard_core::helpers::{dtos::UserPayload, jwt::JwtManager};
 
 use crate::error::ErrorKeeper;
 

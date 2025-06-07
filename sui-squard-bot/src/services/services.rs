@@ -1,6 +1,6 @@
 use anyhow::{Result, anyhow};
 use reqwest::Client;
-use sui_squad_core::helpers::dtos::{DigestResponse, PaymentRequest, WithdrawRequest};
+use sui_squard_core::helpers::dtos::{DigestResponse, PaymentRequest, WithdrawRequest};
 use tracing::{debug, error, info, warn};
 
 use super::dto::Endpoints;
