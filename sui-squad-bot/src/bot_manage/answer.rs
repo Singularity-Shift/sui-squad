@@ -1,6 +1,6 @@
 use anyhow::Result;
 use sled::Db;
-use squard_connect::client::squard_connect::SquardConnect;
+use squad_connect::client::squad_connect::SquadConnect;
 use sui_squad_core::{
     ai::ResponsesClient, 
     commands::bot_commands::Command,
@@ -17,20 +17,20 @@ pub async fn answer(
     msg: Message,
     cmd: Command,
     responses_client: ResponsesClient,
-    squard_connect_client: SquardConnect,
+    squad_connect_client: SquadConnect,
     conversation_cache: ConversationCache,
     db: Db,
 ) -> Result<()> {
     match cmd {
         Command::Help => bot.send_message(msg.chat.id, Command::descriptions().to_string()).await?,
         Command::Login => handle_login(bot, msg, db).await?,
-        Command::Fund => handle_fund(bot, msg, squard_connect_client).await?,
+        Command::Fund => handle_fund(bot, msg, squad_connect_client).await?,
         Command::Prompt(prompt_text) => handle_prompt(
             bot, 
             msg, 
             prompt_text, 
             responses_client, 
-            squard_connect_client,
+            squad_connect_client,
             conversation_cache,
             db,
         ).await?,
@@ -39,7 +39,7 @@ pub async fn answer(
             msg, 
             prompt_text, 
             responses_client, 
-            squard_connect_client,
+            squad_connect_client,
             conversation_cache,
             db
         ).await?,

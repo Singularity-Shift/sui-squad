@@ -4,7 +4,7 @@ use axum::{
     Router, middleware,
     routing::{get, post},
 };
-use squard_connect::{client::squard_connect::SquardConnect, service::dtos::Network};
+use squad_connect::{client::squad_connect::SquadConnect, service::dtos::Network};
 use std::env;
 use sui_sdk::SuiClientBuilder;
 use utoipa::OpenApi;
@@ -45,13 +45,13 @@ pub async fn router() -> Router {
     }
     .expect("Failed to build client");
 
-    let squard_connect_client = SquardConnect::new(node, client_id, network, api_key);
+    let squad_connect_client = SquadConnect::new(node, client_id, network, api_key);
 
     let doc = ApiDoc::openapi();
 
     let (admin, path) = get_account();
 
-    let state = Arc::new(KeeperState::from((squard_connect_client, admin, path)));
+    let state = Arc::new(KeeperState::from((squad_connect_client, admin, path)));
 
     let auth_routers = Router::new()
         .route("/user", post(create_user_if_not_exists))

@@ -2,7 +2,7 @@
 .env
 dev-brief.md
 bot.db
-squard_package.txt
+squad_package.txt
 contracts/sui_squad/build
 contracts/sui_squad/traces
 db

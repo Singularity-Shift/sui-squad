@@ -9,7 +9,7 @@ use anyhow::Result;
 use bot_manage::handler_tree::handler_tree;
 use dotenvy::dotenv;
 use services::services::Services;
-use squard_connect::{client::squard_connect::SquardConnect, service::dtos::Network};
+use squad_connect::{client::squad_connect::SquadConnect, service::dtos::Network};
 use std::env;
 use std::time::Duration;
 use sui_sdk::SuiClientBuilder;
@@ -42,7 +42,7 @@ async fn main() -> Result<()> {
         _ => SuiClientBuilder::default().build_devnet().await?,
     };
 
-    let squard_connect_client = SquardConnect::new(node, client_id, network, api_key);
+    let squad_connect_client = SquadConnect::new(node, client_id, network, api_key);
 
     let services = Services::new();
 
@@ -85,7 +85,7 @@ async fn main() -> Result<()> {
         .dependencies(dptree::deps![
             responses_client.clone(),
             InMemStorage::<LoginState>::new(),
-            squard_connect_client,
+            squad_connect_client,
             services,
             conversation_cache,
             db

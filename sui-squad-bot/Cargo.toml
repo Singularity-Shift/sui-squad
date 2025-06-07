@@ -20,6 +20,6 @@ axum.workspace = true
 tower.workspace = true
 sled.workspace = true
 tower-http.workspace = true
-squard_connect.workspace = true
+squad_connect.workspace = true
 jsonwebtoken.workspace = true
 chrono.workspace = true

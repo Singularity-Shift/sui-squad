@@ -37,9 +37,9 @@ pub async fn payment(
         status: 500,
     })?;
 
-    let squard_connect_client = keeper_state.squard_connect_client();
+    let squad_connect_client = keeper_state.squad_connect_client();
 
-    let node = squard_connect_client.get_node();
+    let node = squad_connect_client.get_node();
 
     let admin = keeper_state.admin();
     let path = keeper_state.path();

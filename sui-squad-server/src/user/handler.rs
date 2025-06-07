@@ -35,7 +35,7 @@ pub async fn create_user_if_not_exists(
         status: 500,
     })?;
 
-    let node = keeper_state.squard_connect_client().get_node();
+    let node = keeper_state.squad_connect_client().get_node();
 
     let admin = keeper_state.admin();
     let path = keeper_state.path();

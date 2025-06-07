@@ -40,7 +40,7 @@ pub async fn fund(
 ) -> Result<Json<DigestResponse>, ErrorKeeper> {
     let package_id = env::var("SUI_SQUAD_PACKAGE_ID").expect("SUI_SQUAD_PACKAGE_ID is not set");
 
-    let node = keeper_state.squard_connect_client().get_node();
+    let node = keeper_state.squad_connect_client().get_node();
 
     let account_events = node
         .event_api()
@@ -83,7 +83,7 @@ pub async fn fund(
             status: 404,
         })?;
 
-    let node = keeper_state.squard_connect_client().get_node();
+    let node = keeper_state.squad_connect_client().get_node();
     let path = keeper_state.path();
 
     let jwt = headers.get("Authorization").ok_or_else(|| ErrorKeeper {
@@ -104,17 +104,17 @@ pub async fn fund(
             status: 401,
         })?;
 
-    let mut squard_connect_client = keeper_state.squard_connect_client().clone();
+    let mut squad_connect_client = keeper_state.squad_connect_client().clone();
 
-    squard_connect_client.set_jwt(jwt.to_string());
+    squad_connect_client.set_jwt(jwt.to_string());
 
-    squard_connect_client.set_zk_proof_params(
+    squad_connect_client.set_zk_proof_params(
         fund_request.randomness,
         fund_request.public_key.clone(),
         fund_request.max_epoch,
     );
 
-    let account = squard_connect_client
+    let account = squad_connect_client
         .get_address()
         .await
         .map_err(|e| ErrorKeeper {
@@ -122,7 +122,7 @@ pub async fn fund(
             status: 500,
         })?;
 
-    let zk_login_inputs = squard_connect_client
+    let zk_login_inputs = squad_connect_client
         .recover_seed_address()
         .await
         .map_err(|e| ErrorKeeper {
@@ -202,7 +202,7 @@ pub async fn fund(
 
     let signer_address = SuiAddress::from(&signer_pk);
 
-    let transaction = squard_connect_client
+    let transaction = squad_connect_client
         .sign_transaction(
             tx.clone(),
             signer_address,

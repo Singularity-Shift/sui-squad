@@ -11,7 +11,7 @@ use anyhow::Result as AnyhowResult;
 
 use reqwest::Url;
 use sled::Db;
-use squard_connect::client::squard_connect::SquardConnect;
+use squad_connect::client::squad_connect::SquadConnect;
 use std::{env, path::PathBuf};
 use sui_sdk::{rpc_types::EventFilter, types::base_types::ObjectID};
 use sui_squad_core::{
@@ -31,12 +31,12 @@ use super::dto::State;
 pub async fn handle_fund(
     bot: Bot,
     msg: Message,
-    squard_connect_client: SquardConnect,
+    squad_connect_client: SquadConnect,
 ) -> AnyhowResult<Message> {
     let current_chat = msg.chat.clone();
     let message: Message;
 
-    let mut squard_connect_client = squard_connect_client.clone();
+    let mut squad_connect_client = squad_connect_client.clone();
 
     if !current_chat.is_group() && !current_chat.is_supergroup() && current_chat.is_private() {
         let user_id = msg.from.unwrap().id.to_string();
@@ -51,16 +51,16 @@ pub async fn handle_fund(
             // Directory might already exist, that's fine
         });
 
-        squard_connect_client.create_zkp_payload(path).await?;
+        squad_connect_client.create_zkp_payload(path).await?;
 
-        let (randomness, public_key, max_epoch) = squard_connect_client.get_zk_proof_params();
+        let (randomness, public_key, max_epoch) = squad_connect_client.get_zk_proof_params();
 
         let state = State::from((user_id.to_string(), max_epoch, public_key, randomness));
 
         let host = env::var("HOST").expect("HOST env variable is not set");
         let redirect_url = format!("https://{host}/webhook/token");
 
-        let url_to_build = squard_connect_client
+        let url_to_build = squad_connect_client
             .get_url::<State>(redirect_url, Some(state))
             .await?;
 
@@ -97,7 +97,7 @@ pub async fn handle_prompt(
     msg: Message,
     prompt_text: String,
     responses_client: ResponsesClient,
-    squard_connect_client: SquardConnect,
+    squad_connect_client: SquadConnect,
     conversation_cache: ConversationCache,
     db: Db,
 ) -> AnyhowResult<Message> {
@@ -161,7 +161,7 @@ pub async fn handle_prompt(
             // Execute function based on name
             let result = match tool_call.name.as_str() {
                 "get_balance" => {
-                    handle_get_balance_tool(user_id, squard_connect_client.clone()).await
+                    handle_get_balance_tool(user_id, squad_connect_client.clone()).await
                 }
                 "withdraw" => {
                     let args: serde_json::Value = serde_json::from_str(&tool_call.arguments)
@@ -217,11 +217,11 @@ pub async fn handle_prompt(
 
 pub async fn handle_get_balance_tool(
     user_id: UserId,
-    squard_connect_client: SquardConnect,
+    squad_connect_client: SquadConnect,
 ) -> String {
     // Find any user's telegram_id from storage keys (UserId is telegram_id
 
-    let node = squard_connect_client.get_node();
+    let node = squad_connect_client.get_node();
 
     let account_events = node
         .event_api()
