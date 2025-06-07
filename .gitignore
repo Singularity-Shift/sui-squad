@@ -3,8 +3,8 @@
 dev-brief.md
 bot.db
 squard_package.txt
-contracts/sui_squard/build
-contracts/sui_squard/traces
+contracts/sui_squad/build
+contracts/sui_squad/traces
 db
 sui.keystore
 sui.aliases

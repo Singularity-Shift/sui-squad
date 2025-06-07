@@ -7621,7 +7621,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "sui-squard-bot"
+name = "sui-squad-bot"
 version = "0.1.0"
 dependencies = [
  "anyhow",
@@ -7636,7 +7636,7 @@ dependencies = [
  "sled",
  "squard_connect",
  "sui-sdk",
- "sui-squard-core",
+ "sui-squad-core",
  "teloxide",
  "tokio",
  "tower 0.5.2",
@@ -7646,7 +7646,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "sui-squard-core"
+name = "sui-squad-core"
 version = "0.1.0"
 dependencies = [
  "anyhow",
@@ -7671,7 +7671,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "sui-squard-server"
+name = "sui-squad-server"
 version = "0.1.0"
 dependencies = [
  "axum",
@@ -7682,7 +7682,7 @@ dependencies = [
  "squard_connect",
  "sui-keys",
  "sui-sdk",
- "sui-squard-core",
+ "sui-squad-core",
  "tokio",
  "tower 0.5.2",
  "tower-http 0.6.4",

@@ -1,7 +1,7 @@
 
 #[test_only]
-module sui_squard::admin_tests {
-    use sui_squard::admin;
+module sui_squad::admin_tests {
+    use sui_squad::admin;
     use sui::test_scenario::{Self as ts};
 
     const ADMIN: address = @0x100;

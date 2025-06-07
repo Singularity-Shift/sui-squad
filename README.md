@@ -12,15 +12,15 @@ A modular, Sui-agnostic Telegram bot infrastructure in Rust, designed for easy b
 
 ## Repository Structure
 ```
-sui-squard-bot/      # Binary crate (main entrypoint)
-sui-squard-core/     # Library crate (all logic, reusable)
+sui-squad-bot/      # Binary crate (main entrypoint)
+sui-squad-core/     # Library crate (all logic, reusable)
 .env.example        # Example environment variables
 ```
 
 ## Quick Start
 ```bash
 cp .env.example .env  # Add your Telegram token
-cargo run -p sui-squard-bot
+cargo run -p sui-squad-bot
 ```
 
 ## Development Plan

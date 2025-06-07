@@ -1,8 +1,8 @@
 services:
-  sui-squard-server:
+  sui-squad-server:
     build:
       context: .
-      dockerfile: sui-squard-server/Dockerfile
+      dockerfile: sui-squad-server/Dockerfile
     ports:
       - "3200:3200"
     environment:
@@ -10,7 +10,7 @@ services:
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
       - ENOKI_API_KEY=${ENOKI_API_KEY}
       - SECRET=${SECRET}
-      - SUI_SQUARD_PACKAGE_ID=${SUI_SQUARD_PACKAGE_ID}
+      - SUI_SQUAD_PACKAGE_ID=${SUI_SQUAD_PACKAGE_ID}
       - KEYSTORE_PATH=${KEYSTORE_PATH}
       - SEED=${SEED}
       - HOST=${HOST}
@@ -24,19 +24,19 @@ services:
       - database
     restart: unless-stopped
     networks:
-      - sui-squard-network
+      - sui-squad-network
 
-  sui-squard-bot:
+  sui-squad-bot:
     build:
       context: .
-      dockerfile: sui-squard-bot/Dockerfile
+      dockerfile: sui-squad-bot/Dockerfile
     environment:
       - TELOXIDE_TOKEN=${TELOXIDE_TOKEN}
       - SUI_NETWORK=${SUI_NETWORK}
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
       - ENOKI_API_KEY=${ENOKI_API_KEY}
       - SECRET=${SECRET}
-      - SUI_SQUARD_PACKAGE_ID=${SUI_SQUARD_PACKAGE_ID}
+      - SUI_SQUAD_PACKAGE_ID=${SUI_SQUAD_PACKAGE_ID}
       - KEYSTORE_PATH=${KEYSTORE_PATH}
       - SEED=${SEED}
       - HOST=${HOST}
@@ -47,11 +47,11 @@ services:
       - keystore_data:/app/keystore
       - sled_data:/app/data
     depends_on:
-      - sui-squard-server
+      - sui-squad-server
       - database
     restart: unless-stopped
     networks:
-      - sui-squard-network
+      - sui-squad-network
 
   database:
     image: alpine:latest
@@ -59,12 +59,12 @@ services:
     volumes:
       - sled_data:/data
     networks:
-      - sui-squard-network
+      - sui-squad-network
 
 volumes:
   sled_data:
   keystore_data:
 
 networks:
-  sui-squard-network:
+  sui-squad-network:
     driver: bridge

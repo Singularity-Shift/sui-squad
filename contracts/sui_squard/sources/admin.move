@@ -1,4 +1,4 @@
-module sui_squard::admin {
+module sui_squad::admin {
   use sui::package;
   use sui::event;
 

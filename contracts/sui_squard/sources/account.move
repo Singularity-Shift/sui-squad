@@ -1,7 +1,7 @@
-module sui_squard::account {
+module sui_squad::account {
   use std::string::String;
   use sui::{dynamic_field as df, event, coin::{Coin}};
-  use sui_squard::admin::Admin;
+  use sui_squad::admin::Admin;
 
   const EONLY_AUTHORIZED_ACCOUNTS_CAN_EXECUTE_THIS_OPERATION: u64 = 1;
   const ENOT_FOUND_BALANCE: u64 = 2;

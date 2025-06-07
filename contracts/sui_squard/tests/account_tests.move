@@ -1,8 +1,8 @@
 
 #[test_only]
-module sui_squard::account_tests {
-    use sui_squard::admin::{Self, Admin};
-    use sui_squard::account::{Self, Account};
+module sui_squad::account_tests {
+    use sui_squad::admin::{Self, Admin};
+    use sui_squad::account::{Self, Account};
     use sui::test_scenario::{Self as ts, Scenario};
     use sui::coin::{Self, Coin};
     use sui::sui::SUI;
@@ -221,7 +221,7 @@ module sui_squard::account_tests {
         ts::end(ts);
     }
 
-    #[test, expected_failure(abort_code = sui_squard::account::EONLY_AUTHORIZED_ACCOUNTS_CAN_EXECUTE_THIS_OPERATION)]
+    #[test, expected_failure(abort_code = sui_squad::account::EONLY_AUTHORIZED_ACCOUNTS_CAN_EXECUTE_THIS_OPERATION)]
     fun test_create_account_with_invalid_admin() {
         let mut ts = ts::begin(ADMIN);
 
@@ -238,7 +238,7 @@ module sui_squard::account_tests {
         abort 1
     }
 
-    #[test, expected_failure(abort_code = sui_squard::account::EONLY_AUTHORIZED_ACCOUNTS_CAN_EXECUTE_THIS_OPERATION)]
+    #[test, expected_failure(abort_code = sui_squad::account::EONLY_AUTHORIZED_ACCOUNTS_CAN_EXECUTE_THIS_OPERATION)]
     fun test_withdraw_funds_with_invalid_admin() {
         let mut ts = ts::begin(ADMIN);
 
@@ -265,7 +265,7 @@ module sui_squard::account_tests {
         abort 1
     }
 
-    #[test, expected_failure(abort_code = sui_squard::account::EMISMATCHED_TELEGRAM_ID)]
+    #[test, expected_failure(abort_code = sui_squad::account::EMISMATCHED_TELEGRAM_ID)]
     fun test_fund_account_with_invalid_telegram_id() {
         let mut ts = ts::begin(ADMIN);
 

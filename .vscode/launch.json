@@ -7,15 +7,15 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug executable 'sui-squard-bot'",
+            "name": "Debug executable 'sui-squad-bot'",
             "cargo": {
                 "args": [
                     "build",
-                    "--bin=sui-squard-bot",
-                    "--package=sui-squard-bot"
+                    "--bin=sui-squad-bot",
+                    "--package=sui-squad-bot"
                 ],
                 "filter": {
-                    "name": "sui-squard-bot",
+                    "name": "sui-squad-bot",
                     "kind": "bin"
                 }
             },
@@ -25,16 +25,16 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug unit tests in executable 'sui-squard-bot'",
+            "name": "Debug unit tests in executable 'sui-squad-bot'",
             "cargo": {
                 "args": [
                     "test",
                     "--no-run",
-                    "--bin=sui-squard-bot",
-                    "--package=sui-squard-bot"
+                    "--bin=sui-squad-bot",
+                    "--package=sui-squad-bot"
                 ],
                 "filter": {
-                    "name": "sui-squard-bot",
+                    "name": "sui-squad-bot",
                     "kind": "bin"
                 }
             },
@@ -63,16 +63,16 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug unit tests in library 'sui_squard_core'",
+            "name": "Debug unit tests in library 'sui_squad_core'",
             "cargo": {
                 "args": [
                     "test",
                     "--no-run",
                     "--lib",
-                    "--package=sui-squard-core"
+                    "--package=sui-squad-core"
                 ],
                 "filter": {
-                    "name": "sui_squard_core",
+                    "name": "sui_squad_core",
                     "kind": "lib"
                 }
             },
@@ -82,15 +82,15 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug executable 'sui-squard-server'",
+            "name": "Debug executable 'sui-squad-server'",
             "cargo": {
                 "args": [
                     "build",
-                    "--bin=sui-squard-server",
-                    "--package=sui-squard-server"
+                    "--bin=sui-squad-server",
+                    "--package=sui-squad-server"
                 ],
                 "filter": {
-                    "name": "sui-squard-server",
+                    "name": "sui-squad-server",
                     "kind": "bin"
                 }
             },
@@ -100,16 +100,16 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug unit tests in executable 'sui-squard-server'",
+            "name": "Debug unit tests in executable 'sui-squad-server'",
             "cargo": {
                 "args": [
                     "test",
                     "--no-run",
-                    "--bin=sui-squard-server",
-                    "--package=sui-squard-server"
+                    "--bin=sui-squad-server",
+                    "--package=sui-squad-server"
                 ],
                 "filter": {
-                    "name": "sui-squard-server",
+                    "name": "sui-squad-server",
                     "kind": "bin"
                 }
             },
