@@ -1,6 +1,4 @@
-use std::collections::HashMap;
-
-use teloxide::{macros::BotCommands, types::UserId};
+use teloxide::macros::BotCommands;
 
 #[derive(BotCommands, Clone, Debug)]
 #[command(
@@ -26,5 +24,4 @@ pub enum Command {
 pub enum LoginState {
     #[default]
     Login,
-    LocalStorate(HashMap<UserId, String>),
 }

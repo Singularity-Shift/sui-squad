@@ -3,10 +3,10 @@ use sled::Db;
 use squard_connect::client::squard_connect::SquardConnect;
 use sui_squad_core::{
     ai::ResponsesClient, 
-    commands::bot_commands::{Command, LoginState},
+    commands::bot_commands::Command,
     conversation::ConversationCache
 };
-use teloxide::{dispatching::dialogue::InMemStorage, prelude::*, types::Message, utils::command::BotCommands, Bot};
+use teloxide::{prelude::*, types::Message, utils::command::BotCommands, Bot};
 
 use crate::bot_manage::handlers::{handle_fund, handle_login};
 
@@ -17,21 +17,19 @@ pub async fn answer(
     msg: Message,
     cmd: Command,
     responses_client: ResponsesClient,
-    dialogue: Dialogue<LoginState, InMemStorage<LoginState>>,
     squard_connect_client: SquardConnect,
     conversation_cache: ConversationCache,
     db: Db,
 ) -> Result<()> {
     match cmd {
         Command::Help => bot.send_message(msg.chat.id, Command::descriptions().to_string()).await?,
-        Command::Login => handle_login(bot, msg, dialogue).await?,
+        Command::Login => handle_login(bot, msg, db).await?,
         Command::Fund => handle_fund(bot, msg, squard_connect_client).await?,
         Command::Prompt(prompt_text) => handle_prompt(
             bot, 
             msg, 
             prompt_text, 
             responses_client, 
-            dialogue, 
             squard_connect_client,
             conversation_cache,
             db,
@@ -41,7 +39,6 @@ pub async fn answer(
             msg, 
             prompt_text, 
             responses_client, 
-            dialogue, 
             squard_connect_client,
             conversation_cache,
             db

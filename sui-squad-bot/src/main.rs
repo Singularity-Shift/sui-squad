@@ -1,4 +1,5 @@
 mod bot_manage;
+mod credentials;
 mod db;
 mod middleware;
 mod services;

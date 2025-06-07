@@ -1,4 +1,3 @@
-use super::dtos::Storage;
 use chrono::{Duration, Utc};
 use jsonwebtoken::{DecodingKey, EncodingKey, Header, TokenData, Validation, decode, encode};
 use serde::{Deserialize, Serialize};
@@ -78,20 +77,20 @@ impl JwtManager {
             .map_err(|e| Box::new(e) as Box<dyn std::error::Error>)
     }
 
-    pub fn validate_and_update_storage(
+    pub fn validate_and_update_jwt(
         &self,
-        mut storage: Storage,
+        mut jwt: String,
         telegram_id: UserId,
-    ) -> Result<Storage, Box<dyn std::error::Error>> {
-        let existing_token = if storage.jwt.is_empty() {
+    ) -> Result<String, Box<dyn std::error::Error>> {
+        let existing_token = if jwt.is_empty() {
             None
         } else {
-            Some(storage.jwt.as_str())
+            Some(jwt.as_str())
         };
 
         let token = self.get_or_generate_token(existing_token, telegram_id)?;
-        storage.jwt = token;
+        jwt = token;
 
-        Ok(storage)
+        Ok(jwt)
     }
 }
