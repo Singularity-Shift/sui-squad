@@ -17,7 +17,6 @@ services:
       - REDIRECT_BACK=${REDIRECT_BACK}
       - SUI_EXPLORER_URL=${SUI_EXPLORER_URL}
       - SERVER_DOMAIN=${SERVER_DOMAIN}
-      - DEFAULT_KEY=${DEFAULT_KEY}
     volumes:
       - keystore_data:/app/keystore
       - sled_data:/app/data
