@@ -17,9 +17,10 @@ services:
       - REDIRECT_BACK=${REDIRECT_BACK}
       - SUI_EXPLORER_URL=${SUI_EXPLORER_URL}
       - SERVER_DOMAIN=${SERVER_DOMAIN}
+      - DEFAULT_KEY=${DEFAULT_KEY}
     volumes:
-      - ./keystore:/app/keystore
-      - ./data:/app/data
+      - keystore_data:/app/keystore
+      - sled_data:/app/data
     depends_on:
       - database
     restart: unless-stopped
@@ -44,8 +45,8 @@ services:
       - SUI_EXPLORER_URL=${SUI_EXPLORER_URL}
       - SLED_URL=${SLED_URL}
     volumes:
-      - ./keystore:/app/keystore
-      - ./data:/app/data
+      - keystore_data:/app/keystore
+      - sled_data:/app/data
     depends_on:
       - sui-squard-server
       - database
@@ -63,6 +64,7 @@ services:
 
 volumes:
   sled_data:
+  keystore_data:
 
 networks:
   sui-squard-network:

@@ -1,6 +1,10 @@
 use sled::Db;
 use sui_squad_core::{commands::bot_commands::LoginState, helpers::dtos::Storage};
-use teloxide::{dispatching::dialogue::InMemStorage, prelude::Dialogue, types::Message};
+use teloxide::{
+    dispatching::dialogue::InMemStorage,
+    prelude::Dialogue,
+    types::{Message, UserId},
+};
 use tracing::{debug, error, info, warn};
 
 use crate::services::services::Services;
@@ -84,24 +88,11 @@ pub async fn check_user(
                                                 "❌ Username not found in database: {}",
                                                 username
                                             );
-                                            return false;
+
+                                            insert_user_to_db(db, username, user.id);
                                         }
                                     } else {
-                                        let db_result = db.insert(
-                                            username.clone(),
-                                            user.id.to_string().as_bytes(),
-                                        );
-
-                                        if db_result.is_ok() {
-                                            info!("✅ Username added to database: {}", username);
-                                            return true;
-                                        } else {
-                                            error!(
-                                                "❌ Failed to add username to database: {}",
-                                                username
-                                            );
-                                            return false;
-                                        }
+                                        insert_user_to_db(db, username, user.id);
                                     }
                                 } else {
                                     error!(
@@ -161,6 +152,18 @@ pub async fn check_user(
         }
     } else {
         warn!("⚠️ No login state found in dialogue");
+        return false;
+    }
+}
+
+fn insert_user_to_db(db: Db, username: String, telegram_id: UserId) -> bool {
+    let db_result = db.insert(username.clone(), telegram_id.to_string().as_bytes());
+
+    if db_result.is_ok() {
+        info!("✅ Username added to database: {}", username);
+        return true;
+    } else {
+        error!("❌ Failed to add username to database: {}", username);
         return false;
     }
 }

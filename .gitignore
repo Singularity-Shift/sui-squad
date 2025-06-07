@@ -8,4 +8,5 @@ contracts/sui_squard/traces
 db
 sui.keystore
 sui.aliases
-*.keystore
+keystore
+data
