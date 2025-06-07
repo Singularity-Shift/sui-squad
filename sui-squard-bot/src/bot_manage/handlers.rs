@@ -106,6 +106,14 @@ pub async fn handle_prompt(
 
     let user = msg.from.clone();
 
+    if user.is_none() {
+        return Err(anyhow::anyhow!("User not found"));
+    }
+
+    let user = user.unwrap();
+
+    let user_id = user.id;
+
     // Get cached conversation ID
     let previous_response_id = conversation_cache.get(&user_key).await;
 
@@ -150,40 +158,23 @@ pub async fn handle_prompt(
             // Execute function based on name
             let result = match tool_call.name.as_str() {
                 "get_balance" => {
-                    handle_get_balance_tool(dialogue.clone(), squard_connect_client.clone()).await
+                    handle_get_balance_tool(
+                        dialogue.clone(),
+                        user_id,
+                        squard_connect_client.clone(),
+                    )
+                    .await
                 }
                 "withdraw" => {
-                    let user_clone = user.clone();
-                    if user_clone.is_none() {
-                        return Err(anyhow::anyhow!("User not found"));
-                    }
-
                     let args: serde_json::Value = serde_json::from_str(&tool_call.arguments)
                         .unwrap_or_else(|_| serde_json::json!({}));
-                    handle_withdraw_tool(
-                        dialogue.clone(),
-                        user_clone.unwrap().id,
-                        args,
-                        Services::new(),
-                    )
-                    .await
+                    handle_withdraw_tool(dialogue.clone(), user_id, args, Services::new()).await
                 }
                 "send" => {
-                    let user_clone = user.clone();
-                    if user_clone.is_none() {
-                        return Err(anyhow::anyhow!("User not found"));
-                    }
-
                     let args: serde_json::Value = serde_json::from_str(&tool_call.arguments)
                         .unwrap_or_else(|_| serde_json::json!({}));
-                    handle_send_tool(
-                        dialogue.clone(),
-                        user_clone.unwrap().id,
-                        args,
-                        Services::new(),
-                        db.clone(),
-                    )
-                    .await
+                    handle_send_tool(dialogue.clone(), user_id, args, Services::new(), db.clone())
+                        .await
                 }
                 _ => format!("Unknown function call: {}", tool_call.name),
             };
@@ -229,6 +220,7 @@ pub async fn handle_prompt(
 
 pub async fn handle_get_balance_tool(
     dialogue: Dialogue<LoginState, InMemStorage<LoginState>>,
+    user_id: UserId,
     squard_connect_client: SquardConnect,
 ) -> String {
     // Get telegram_id from dialogue state
@@ -239,7 +231,7 @@ pub async fn handle_get_balance_tool(
 
     let telegram_id_str = if let Some(LoginState::LocalStorate(storage)) = login_state.unwrap() {
         // Find any user's telegram_id from storage keys (UserId is telegram_id)
-        if let Some(user_id) = storage.keys().next() {
+        if let Some(user_id) = storage.get(&user_id) {
             user_id.to_string()
         } else {
             return "Error: No user found in session".to_string();
@@ -383,7 +375,7 @@ pub async fn handle_get_balance_tool(
 
 pub async fn handle_send_tool(
     dialogue: Dialogue<LoginState, InMemStorage<LoginState>>,
-    chat: UserId,
+    user_id: UserId,
     args: serde_json::Value,
     services: Services,
     db: Db,
@@ -400,8 +392,6 @@ pub async fn handle_send_tool(
     if login_state.is_err() {
         return "Error: Unable to access user session".to_string();
     }
-
-    let user_id = chat;
 
     let login_state = login_state.unwrap();
 
