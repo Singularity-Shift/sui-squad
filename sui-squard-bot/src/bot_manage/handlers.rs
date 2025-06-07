@@ -41,7 +41,6 @@ pub async fn handle_fund(
 
         let mut path = PathBuf::new();
         path.push(path_str);
-        path.push("zkp"); // Use separate directory for ZKP operations
 
         // Ensure the zkp directory exists
         std::fs::create_dir_all(&path).unwrap_or_else(|_| {
