@@ -16,6 +16,7 @@ services:
       - HOST=${HOST}
       - REDIRECT_BACK=${REDIRECT_BACK}
       - SUI_EXPLORER_URL=${SUI_EXPLORER_URL}
+      - SERVER_DOMAIN=${SERVER_DOMAIN}
     volumes:
       - ./keystore:/app/keystore
       - ./data:/app/data
@@ -42,7 +43,6 @@ services:
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - SUI_EXPLORER_URL=${SUI_EXPLORER_URL}
       - SLED_URL=${SLED_URL}
-      - SERVER_URL=${SERVER_URL}
     volumes:
       - ./keystore:/app/keystore
       - ./data:/app/data
