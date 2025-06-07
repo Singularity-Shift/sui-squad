@@ -283,6 +283,6 @@ This project is dual-licensed under:
 - **[GNU General Public License v3.0 (GPL-3.0)](https://www.gnu.org/licenses/gpl-3.0.en.html)** - For open source use
 - **Commercial License** - For proprietary applications
 
-For commercial licensing, contact: james@sshiftgpt.com
+For commercial licensing, contact: james@sshiftgpt.com or spielcrypto@sshiftgpt.com
 
 Copyright (c) 2025 SSHIFT GPT 
