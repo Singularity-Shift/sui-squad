@@ -117,6 +117,8 @@ pub async fn handle_prompt(
 
     let user_id = user.id;
 
+    let username = user.username;
+
     // Get cached conversation ID
     let previous_response_id = conversation_cache.get(&user_key).await;
 
@@ -158,6 +160,8 @@ pub async fn handle_prompt(
             println!("   📞 Function: {} ({})", tool_call.name, tool_call.call_id);
             println!("   📋 Arguments: {}", tool_call.arguments);
 
+            let username = username.clone();
+
             // Execute function based on name
             let result = match tool_call.name.as_str() {
                 "get_balance" => {
@@ -166,12 +170,12 @@ pub async fn handle_prompt(
                 "withdraw" => {
                     let args: serde_json::Value = serde_json::from_str(&tool_call.arguments)
                         .unwrap_or_else(|_| serde_json::json!({}));
-                    handle_withdraw_tool(user_id, args, Services::new(), db.clone()).await
+                    handle_withdraw_tool(username, args, Services::new(), db.clone()).await
                 }
                 "send" => {
                     let args: serde_json::Value = serde_json::from_str(&tool_call.arguments)
                         .unwrap_or_else(|_| serde_json::json!({}));
-                    handle_send_tool(user_id, args, Services::new(), db.clone()).await
+                    handle_send_tool(username, args, Services::new(), db.clone()).await
                 }
                 _ => format!("Unknown function call: {}", tool_call.name),
             };
@@ -355,7 +359,7 @@ pub async fn handle_get_balance_tool(
 }
 
 pub async fn handle_send_tool(
-    user_id: UserId,
+    username: Option<String>,
     args: serde_json::Value,
     services: Services,
     db: Db,
@@ -368,7 +372,13 @@ pub async fn handle_send_tool(
 
     let sui_explorer_url = sui_explorer_url.unwrap();
 
-    let credentials = get_credentials(&user_id.to_string(), db.clone());
+    if username.is_none() {
+        return "Error: Username is required".to_string();
+    }
+
+    let username = username.unwrap();
+
+    let credentials = get_credentials(&username, db.clone());
 
     if credentials.is_none() {
         return "Error: User not found".to_string();
@@ -464,7 +474,7 @@ pub async fn handle_send_tool(
 }
 
 pub async fn handle_withdraw_tool(
-    user_id: UserId,
+    username: Option<String>,
     args: serde_json::Value,
     services: Services,
     db: Db,
@@ -477,7 +487,13 @@ pub async fn handle_withdraw_tool(
 
     let sui_explorer_url = sui_explorer_url.unwrap();
 
-    let credentials = get_credentials(&user_id.to_string(), db.clone());
+    if username.is_none() {
+        return "Error: Username is required".to_string();
+    }
+
+    let username = username.unwrap();
+
+    let credentials = get_credentials(&username, db.clone());
 
     if credentials.is_none() {
         return "Error: User not found".to_string();

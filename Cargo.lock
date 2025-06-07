@@ -7061,8 +7061,8 @@ dependencies = [
 
 [[package]]
 name = "squad_connect"
-version = "0.1.15"
-source = "git+https://github.com/Singularity-Shift/squad_connect?tag=0.1.15#83b09d99a58435dfabaa3e977277a4f7e4ffed94"
+version = "0.1.16"
+source = "git+https://github.com/Singularity-Shift/squad_connect?tag=0.1.16#86bd8bde58c72a87d497eba674dcf179b3d08e03"
 dependencies = [
  "async-trait",
  "base64 0.22.1",

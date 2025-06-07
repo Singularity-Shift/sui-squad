@@ -19,7 +19,7 @@ dotenvy = "0.15.7"
 open-ai-rust-responses-by-sshift = { version = "0.1.8", features = ["stream"] }
 sui_sdk = { git = "https://github.com/mystenlabs/sui", package = "sui-sdk" }
 shared_crypto = { git = "https://github.com/mystenlabs/sui", package = "shared-crypto" }
-squad_connect = { git = "https://github.com/Singularity-Shift/squad_connect", package = "squad_connect", tag="0.1.15"}
+squad_connect = { git = "https://github.com/Singularity-Shift/squad_connect", package = "squad_connect", tag="0.1.16"}
 async-trait = "0.1"
 thiserror = "1.0"
 teloxide = { version = "0.15", features = ["macros", "webhooks-axum"] }
