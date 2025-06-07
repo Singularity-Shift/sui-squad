@@ -21,7 +21,9 @@ async fn main() {
 
     let app = router().await;
 
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:3200").await.unwrap();
+    let listener = tokio::net::TcpListener::bind("localhost:3200")
+        .await
+        .unwrap();
 
     axum::serve(listener, app).await.unwrap();
 }
