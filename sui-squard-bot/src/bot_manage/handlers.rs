@@ -34,7 +34,7 @@ pub async fn handle_fund(
 
     let mut squard_connect_client = squard_connect_client.clone();
 
-    if !current_chat.is_group() {
+    if !current_chat.is_group() && !current_chat.is_supergroup() && current_chat.is_private() {
         let user_id = msg.from.unwrap().id.to_string();
 
         let path_str = env::var("KEYSTORE_PATH").expect("PATH env variable is not set");
