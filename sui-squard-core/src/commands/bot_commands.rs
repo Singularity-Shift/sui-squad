@@ -8,6 +8,8 @@ use teloxide::{macros::BotCommands, types::UserId};
     description = "These commands are supported:"
 )]
 pub enum Command {
+    #[command(description = "Log in to your account.")]
+    Login,
     #[command(description = "Send a prompt to the AI assistant.")]
     Prompt(String),
     #[command(description = "Send a prompt to the AI assistant (short alias for /prompt).")]

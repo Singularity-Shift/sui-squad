@@ -8,7 +8,7 @@ use sui_squad_core::{
 };
 use teloxide::{dispatching::dialogue::InMemStorage, prelude::*, types::Message, utils::command::BotCommands, Bot};
 
-use crate::bot_manage::handlers::handle_fund;
+use crate::bot_manage::handlers::{handle_fund, handle_login};
 
 use super::handlers::{handle_prompt};
 
@@ -24,6 +24,7 @@ pub async fn answer(
 ) -> Result<()> {
     match cmd {
         Command::Help => bot.send_message(msg.chat.id, Command::descriptions().to_string()).await?,
+        Command::Login => handle_login(bot, msg, dialogue).await?,
         Command::Fund => handle_fund(bot, msg, squard_connect_client).await?,
         Command::Prompt(prompt_text) => handle_prompt(
             bot, 

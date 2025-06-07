@@ -17,7 +17,7 @@ use sui_squad_core::{
 };
 use teloxide::{
     Bot,
-    dispatching::dialogue::InMemStorage,
+    dispatching::dialogue::{Dialogue, InMemStorage},
     prelude::*,
     types::{InlineKeyboardButton, InlineKeyboardMarkup, Message, ParseMode},
 };
@@ -40,8 +40,13 @@ pub async fn handle_fund(
         let path_str = env::var("KEYSTORE_PATH").expect("PATH env variable is not set");
 
         let mut path = PathBuf::new();
-
         path.push(path_str);
+        path.push("zkp"); // Use separate directory for ZKP operations
+
+        // Ensure the zkp directory exists
+        std::fs::create_dir_all(&path).unwrap_or_else(|_| {
+            // Directory might already exist, that's fine
+        });
 
         squard_connect_client.create_zkp_payload(path).await?;
 
@@ -586,5 +591,59 @@ pub async fn handle_withdraw_tool(
         return format!("{}/txblock/{}", sui_explorer_url, digests.digest);
     } else {
         return "Error: User not found".to_string();
+    }
+}
+
+pub async fn handle_login(
+    bot: Bot,
+    msg: Message,
+    dialogue: Dialogue<LoginState, InMemStorage<LoginState>>,
+) -> AnyhowResult<Message> {
+    let user = msg.from.clone();
+
+    if let Some(user) = user {
+        // Get or create login state
+        let login_state = dialogue.get().await;
+        let mut users = if let Ok(Some(LoginState::LocalStorate(existing_users))) = login_state {
+            existing_users
+        } else {
+            std::collections::HashMap::new()
+        };
+
+        // Generate JWT token
+        let jwt_manager = sui_squad_core::helpers::jwt::JwtManager::new();
+        match jwt_manager.generate_token(user.id) {
+            Ok(token) => {
+                let storage = sui_squad_core::helpers::dtos::Storage { jwt: token };
+                let storage_str = serde_json::to_string(&storage).unwrap();
+                users.insert(user.id, storage_str);
+
+                // Update dialogue state
+                let new_login_state = LoginState::LocalStorate(users);
+                dialogue.update(new_login_state).await?;
+
+                let message = bot
+                    .send_message(
+                        msg.chat.id,
+                        "✅ Successfully logged in! You can now use commands like /p and /prompt.",
+                    )
+                    .await?;
+
+                Ok(message)
+            }
+            Err(e) => {
+                let message = bot
+                    .send_message(msg.chat.id, &format!("❌ Login failed: {}", e))
+                    .await?;
+
+                Ok(message)
+            }
+        }
+    } else {
+        let message = bot
+            .send_message(msg.chat.id, "❌ Unable to identify user for login.")
+            .await?;
+
+        Ok(message)
     }
 }
