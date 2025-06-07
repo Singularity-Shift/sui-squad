@@ -20,7 +20,7 @@ sui-squard-core/     # Library crate (all logic, reusable)
 ## Quick Start
 ```bash
 cp .env.example .env  # Add your Telegram token
-cargo run -p sui-squad-bot
+cargo run -p sui-squard-bot
 ```
 
 ## Development Plan

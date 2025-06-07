@@ -1,0 +1,69 @@
+services:
+  sui-squard-server:
+    build:
+      context: .
+      dockerfile: sui-squard-server/Dockerfile
+    ports:
+      - "3200:3200"
+    environment:
+      - SUI_NETWORK=${SUI_NETWORK}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - ENOKI_API_KEY=${ENOKI_API_KEY}
+      - SECRET=${SECRET}
+      - SUI_SQUARD_PACKAGE_ID=${SUI_SQUARD_PACKAGE_ID}
+      - KEYSTORE_PATH=${KEYSTORE_PATH}
+      - SEED=${SEED}
+      - HOST=${HOST}
+      - REDIRECT_BACK=${REDIRECT_BACK}
+      - SUI_EXPLORER_URL=${SUI_EXPLORER_URL}
+    volumes:
+      - ./keystore:/app/keystore
+      - ./data:/app/data
+    depends_on:
+      - database
+    restart: unless-stopped
+    networks:
+      - sui-squard-network
+
+  sui-squard-bot:
+    build:
+      context: .
+      dockerfile: sui-squard-bot/Dockerfile
+    environment:
+      - TELOXIDE_TOKEN=${TELOXIDE_TOKEN}
+      - SUI_NETWORK=${SUI_NETWORK}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - ENOKI_API_KEY=${ENOKI_API_KEY}
+      - SECRET=${SECRET}
+      - SUI_SQUARD_PACKAGE_ID=${SUI_SQUARD_PACKAGE_ID}
+      - KEYSTORE_PATH=${KEYSTORE_PATH}
+      - SEED=${SEED}
+      - HOST=${HOST}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - SUI_EXPLORER_URL=${SUI_EXPLORER_URL}
+      - SLED_URL=${SLED_URL}
+      - SERVER_URL=${SERVER_URL}
+    volumes:
+      - ./keystore:/app/keystore
+      - ./data:/app/data
+    depends_on:
+      - sui-squard-server
+      - database
+    restart: unless-stopped
+    networks:
+      - sui-squard-network
+
+  database:
+    image: alpine:latest
+    command: sh -c "mkdir -p /data && tail -f /dev/null"
+    volumes:
+      - sled_data:/data
+    networks:
+      - sui-squard-network
+
+volumes:
+  sled_data:
+
+networks:
+  sui-squard-network:
+    driver: bridge
