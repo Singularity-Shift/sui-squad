@@ -422,29 +422,29 @@ pub async fn handle_send_tool(
                 let sui_explorer_url = sui_explorer_url.clone();
 
                 tokio::spawn(async move {
-                    let target_id = db.get(&target);
+                    let user = db.get(&target);
 
-                    if target_id.is_err() {
+                    if user.is_err() {
                         return "Error: Target not found".to_string();
                     }
 
-                    let target_id = target_id.unwrap();
+                    let user = user.unwrap();
 
-                    if target_id.is_none() {
+                    if user.is_none() {
                         return "Error: Target not found".to_string();
                     }
 
-                    let target_id_vec = target_id.unwrap();
+                    let user_vec = user.unwrap();
 
-                    let target_id = serde_json::from_slice::<u64>(&target_id_vec);
+                    let user = serde_json::from_slice::<Credentials>(&user_vec);
 
-                    if target_id.is_err() {
+                    if user.is_err() {
                         return "Error: Failed to parse target id".to_string();
                     }
 
                     let request = PaymentRequest {
                         amount,
-                        receiver_id: target_id.unwrap().to_string(),
+                        receiver_id: user.unwrap().user_id.to_string(),
                     };
 
                     let digests = services.payment(token, request).await;
