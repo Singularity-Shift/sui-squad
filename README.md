@@ -276,6 +276,10 @@ This project uses:
 - **Cargo fmt** for formatting
 - **Cargo clippy** for linting
 
+### Our Sui Squad bot (testnet)
+
+https://t.me/sui_squard_bot
+
 ## 📄 License
 
 This project is dual-licensed under:
